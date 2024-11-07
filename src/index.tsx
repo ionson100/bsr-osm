@@ -14,48 +14,66 @@ root.render(
   // <React.StrictMode>
 
       <>
-      <div className={"left-menu"}>
-          <button onClick={()=>{
-              myStateApp.map?.DrawFeatureCollection(json)
-          }}>add Features</button>
-          <button onClick={()=>{
-              console.log(myStateApp.map?.getBound(true))
-          }}>getBound as json</button>
+          <div className={"left-menu"}>
+              <button onClick={() => {
+                  myStateApp.map?.DrawFeatureCollection(json)
+              }}>Add Features
+              </button>
+              <button onClick={() => {
+                  console.log(myStateApp.map?.getBound(true))
+              }}>GetBound as json
+              </button>
 
-          <button onClick={()=>{
-              console.log(myStateApp.map?.getBound())
-          }}>getBound as object</button>
-          <button onClick={()=>{
-              console.log(myStateApp.map!.getFeatures(MyGeometry.point))
-          }}>get feature</button>
-          <button onClick={()=>{
-              myStateApp.map!.removeAllFeatures()
-          }}>clear feature</button>
+              <button onClick={() => {
+                  console.log(myStateApp.map?.getBound())
+              }}>GetBound as object
+              </button>
+              <button onClick={() => {
+                  console.log(myStateApp.map!.getFeatures())
+              }}>Get all features
+              </button>
+              <button onClick={() => {
+                  myStateApp.map!.removeAllFeatures()
+              }}>Clear all feature
+              </button>
 
-          <button onClick={()=>{
-              myStateApp.map!.CreatePolygon()
-          }}>create polygon</button>
-          <button onClick={()=>{
-              myStateApp.map!.CreateRoute()
-          }}>create polygon</button>
+              <button onClick={() => {
+                  myStateApp.map!.CreatePolygon()
+              }}>Create polygon
+              </button>
 
-          <button onClick={()=>{
-              myStateApp.map!.StartEditFeature(myStateApp.currentFeature)
-          }}>StartEditFeature</button>
-          <button onClick={()=>{
-              myStateApp.map!.FinishEditFeature()
-          }}>FinisFeature</button>
+              <button onClick={() => {
+                  myStateApp.map!.CreatePoint()
+              }}>Create point
+              </button>
+              <button onClick={() => {
+                  myStateApp.map!.CreateCircle()
+              }}>Create circle
+              </button>
+              <button onClick={() => {
+                  myStateApp.map!.CreateRoute()
+              }}>Create lineString
+              </button>
+
+              <button onClick={() => {
+                  myStateApp.map!.StartEditFeature(myStateApp.currentFeature)
+              }}>StartEditFeature
+              </button>
+              <button onClick={() => {
+                  myStateApp.map!.FinishEditFeature()
+              }}>FinisEditFeature
+              </button>
 
 
-      </div>
+          </div>
           <div id={'content'}>
-              <App />
+              <App/>
           </div>
       </>
 
 
 
-  // </React.StrictMode>
+    // </React.StrictMode>
 );
 
 // If you want to start measuring performance in your app, pass a function

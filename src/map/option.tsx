@@ -1,6 +1,7 @@
 import {FeatureLike} from "ol/Feature";
 import {Feature} from "ol";
 import {Geometry} from "ol/geom";
+import {BsrMap} from "./mapCore";
 
 export type OptionOSM = {
     zoom?: number;
@@ -9,10 +10,13 @@ export type OptionOSM = {
      */
     center?: Array<number>
     removeDoubleClickZoom?: boolean
-    onClick?: (f: FeatureLike | undefined) => void
-    onShowContextMenu?:(f: FeatureLike | undefined,e: MouseEvent)=>void
-    onModifyEnd?:(f: Feature<Geometry>,json:string)=>void
-    onDrawEnd?:(f:Feature,json:string)=>void
+    onClick?: (map:BsrMap,feature: Feature | undefined) => void
+    onShowContextMenu?:(map:BsrMap,feature: Feature<Geometry> | undefined,e: MouseEvent)=>void
+    onModifyEnd?:(map:BsrMap,feature: Feature<Geometry>,json:string)=>void
+    onDrawEnd?:(map:BsrMap,feature:Feature,json:string)=>void
+    onDragEnd?:(map:BsrMap, feature:Feature, json:string)=>void
+    onDrawBoxEnd?:(map:BsrMap, features:Feature<Geometry>[],extend:Array<number>)=>void
+    useDrawBox?:boolean
     style?:Style
 
 

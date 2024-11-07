@@ -2,50 +2,37 @@ import React from "react";
 import {v4 as uuid} from 'uuid'
 import TileLayer from "ol/layer/Tile";
 import {OSM} from "ol/source.js";
-import sync from './ol-hashe';
 import VectorSource from "ol/source/Vector";
-
-
-import VectorLayer from "ol/layer/Vector";
 import {GeoJSON} from "ol/format";
-import {Draw, Modify, Select} from "ol/interaction.js";
-import {click} from 'ol/events/condition';
-import {transform} from "ol/proj";
+import {defaults as defaultInteractions, Draw, Modify, Select} from "ol/interaction.js";
+import {click, platformModifierKeyOnly} from 'ol/events/condition';
 import View from "ol/View.js";
 
-//import sync from 'ol-hashed';
 import Map from 'ol/Map';
-import {v4 as uuidv4} from 'uuid';
 
 
-import {
-    defaults as defaultInteractions,
-} from 'ol/interaction.js';
-
-
-import {DoubleClickZoom} from "ol/interaction";
-import * as extent from "ol/extent";
+import {DoubleClickZoom, DragBox} from "ol/interaction";
 import {Drag, source, vector} from "./Drag";
-import {json} from "./features";
-import {FeatureType} from "ol/format/WFS";
 import {Collection, Feature, MapBrowserEvent} from "ol";
-import {Geometry, Point} from "ol/geom";
+import {Geometry} from "ol/geom";
 import {MyGeometry} from "./utils";
-import {getDraw} from "./Draw";
-import {styleFunction} from "./myStyle";
+
+import {mySelectPolygon, styleFunction} from "./myStyle";
 import {defaultStyle, OptionOSM} from "./option";
+import {Fill, Stroke, Style} from "ol/style";
 
 
 const raster = new TileLayer({
     source: new OSM()
 })
-const typles = Object.freeze({
-    NONE: Symbol('None'),
-    POLYGON: Symbol('Polygon'),
-    LINE: Symbol('LineString')
-});
+// const typles = Object.freeze({
+//     NONE: Symbol('None'),
+//     POLYGON: Symbol('Polygon'),
+//     LINE: Symbol('LineString'),
+//     POINT: Symbol('Point')
+// });
 
-let type = typles.POLYGON;
+//let type = typles.NONE;
 
 
 /**
@@ -56,14 +43,29 @@ export type PropsBsrMap = {
 }
 
 export class BsrMap extends React.Component<PropsBsrMap, any> {
+    private source: VectorSource<any> = new VectorSource({wrapX: false});
     private modify1?: Modify
     private id = uuid()
     private map?: Map
     private draw?: Draw
+
+    private selectedStyle = new Style({
+        fill: new Fill({
+            color: 'rgba(255, 255, 255, 0.6)',
+        }),
+        stroke: new Stroke({
+            color: 'rgba(255, 255, 255, 0.7)',
+            width: 2,
+        }),
+    });
+
+
     private typles = Object.freeze({
         NONE: Symbol('None'),
         POLYGON: Symbol('Polygon'),
-        LINE: Symbol('LineString')
+        LINE: Symbol('LineString'),
+        POINT: Symbol('Point'),
+        CIRCLE: Symbol('Circle'),
     });
     private selectAltClick = new Select({
         //@ts-ignored
@@ -75,7 +77,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
 
     });
 
-    private type = typles.POLYGON;
+    private type = this.typles.POINT;
 
     constructor(props: Readonly<PropsBsrMap>) {
         super(props);
@@ -86,9 +88,9 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
             //@ts-ignored
             type: this.type.description
         });
-        setTimeout(()=>{
-            if(!this.props.option.style){
-                this.props.option.style=defaultStyle;
+        setTimeout(() => {
+            if (!this.props.option.style) {
+                this.props.option.style = defaultStyle;
             }
         })
 
@@ -98,7 +100,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         setTimeout(() => {
             this.map = new Map(
                 {
-                    interactions: defaultInteractions().extend([new Drag(),]),
+                    interactions: defaultInteractions().extend([new Drag(this, this.props.option),]),
 
                     layers: [new TileLayer({
                         source: new OSM(),
@@ -131,8 +133,8 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                             return feature;
                         });
                     if (feature) {
-                        this.refreshStyleFeatures()
-                        this.props.option.onClick!(feature)
+
+                        this.props.option.onClick!(this, feature as Feature)
                     }
                 })
 
@@ -145,12 +147,31 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                         function (feature) {
                             return feature;
                         });
-                    this.props.option.onShowContextMenu!(feature, e);
+                    this.props.option.onShowContextMenu!(this, feature as Feature, e);
                 });
             }
 
 
+            if (this.props.option.useDrawBox) {
+                const dragBox = new DragBox({
+                    condition: platformModifierKeyOnly,
+                    className: "box"
+                });
+                if (this.props.option.onDrawBoxEnd) {
+                    dragBox.on('boxend', () => {
+
+                        const boxExtent: Array<number> = dragBox.getGeometry().getExtent();
+                        const boxFeatures = source.getFeaturesInExtent(boxExtent)
+                        this.props.option.onDrawBoxEnd!(this, boxFeatures, boxExtent)
+                    })
+                }
+
+
+                this.map!.addInteraction(dragBox)
+            }
+
         })
+
     }
 
     public DrawFeatureCollection(json: string) {
@@ -159,14 +180,21 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         source.addFeatures(features)
     }
 
+
     /**
      * Перерисовка стилей
      */
-    refreshStyleFeatures() {
+    public RefreshStyleFeatures() {
 
         source.getFeatures().map((f) => {
             f.setStyle(styleFunction)
         })
+    }
+
+    public SelectStyleFeature(feature: Feature) {
+
+        this.RefreshStyleFeatures();
+        feature.setStyle(mySelectPolygon)
     }
 
     /**
@@ -227,7 +255,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
 
     }
 
-    public  CreateRoute() {
+    public CreateRoute() {
         this.map!.removeInteraction(this.selectAltClick);
 
         this.map!.removeInteraction(this.modify1!);
@@ -241,14 +269,25 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         this.allowDrawFeature(1);
         return true;
     }
+    public CreatePoint() {
+        this.map!.removeInteraction(this.selectAltClick);
+        this.map!.removeInteraction(this.modify1!);
+        this.allowDrawFeature(3);
+        return true;
+    }
+    public CreateCircle() {
+        this.map!.removeInteraction(this.selectAltClick);
+        this.map!.removeInteraction(this.modify1!);
+        this.allowDrawFeature(4);
+        return true;
+    }
+
     /**
      * возврат точки при создании маршрута или полигона
      */
     undo() {
         this.draw?.removeLastPoint();
     }
-
-
 
 
     private allowDrawFeature(index = 0) {
@@ -259,6 +298,14 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
             }
             case 2: {
                 this.type = this.typles.LINE;
+                break;
+            }
+            case 3: {
+                this.type = this.typles.POINT;
+                break;
+            }
+            case 4: {
+                this.type = this.typles.CIRCLE;
                 break;
             }
             default: {
@@ -275,13 +322,13 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
             const feature: Feature = e.feature;
             this.map!.removeInteraction(this.draw!);
             this.editOnlyRouteOrPolygon()
-            if(this.props.option.onDrawEnd){
-                this.props.option.onDrawEnd(feature,this.ConvertFeatureToJson(feature))
+            if (this.props.option.onDrawEnd) {
+                this.props.option.onDrawEnd(this, feature, this.ConvertFeatureToJson(feature))
             }
-            setTimeout(()=>{
+            setTimeout(() => {
                 this.selectAltClick?.getFeatures().clear()
                 this.selectAltClick.getFeatures().push(feature)
-            },500)
+            }, 500)
         });
 
         this.map!.addInteraction(this.draw!);
@@ -289,7 +336,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
 
     }
 
-    public StartEditFeature(feature:Feature) {
+    public StartEditFeature(feature: Feature) {
         const d: Collection<Feature<Geometry>> = this.selectAltClick.getFeatures();
         if (d.getLength() > 0) {
             this.selectAltClick.getFeatures().clear()
@@ -297,29 +344,28 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
             this.selectAltClick.getFeatures().push(feature)
         }
     }
-    public FinishEditFeature(callback?:()=>void){
+
+    public FinishEditFeature(callback?: () => void) {
         this.selectAltClick.getFeatures().clear()
-        if(callback) {
+        if (callback) {
             callback()
         }
     }
-    public ConvertFeatureToJson(f:Feature){
+
+    public ConvertFeatureToJson(f: Feature) {
         const geoJsonGeom = new GeoJSON();
         const featureClone: Feature<Geometry> = f.clone();
-        return  geoJsonGeom.writeGeometry(featureClone.getGeometry()!);
+        return geoJsonGeom.writeGeometry(featureClone.getGeometry()!);
     }
 
     private editOnlyRouteOrPolygon() {
         this.modify1 = new Modify({
             features: this.selectAltClick.getFeatures()
         });
-        if(this.props.option.onModifyEnd){
+        if (this.props.option.onModifyEnd) {
             this.modify1.on('modifyend', (event) => {
                 event.features.forEach((feature) => {
-                    const geoJsonGeom = new GeoJSON();
-                    const featureClone: Feature<Geometry> = feature.clone();
-                    const json = geoJsonGeom.writeGeometry(featureClone.getGeometry()!);
-                    this.props.option.onModifyEnd!(feature,this.ConvertFeatureToJson(feature))
+                    this.props.option.onModifyEnd!(this, feature, this.ConvertFeatureToJson(feature))
                 });
             });
         }
@@ -335,7 +381,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
     refreshStyleFeaturesPolygon() {
         source.getFeatures().map((f) => {
 
-                f.setStyle(styleFunction)
+            f.setStyle(styleFunction)
         })
     }
 
