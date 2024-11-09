@@ -439,7 +439,6 @@ var BsrMap = /** @class */ (function (_super) {
             //@ts-ignored
             type: _this.type.description
         });
-        _this.initMap();
         return _this;
     }
     BsrMap.prototype.initMap = function () {
@@ -755,12 +754,16 @@ var BsrMap = /** @class */ (function (_super) {
         (_a = this.syncUnmount) === null || _a === void 0 ? void 0 : _a.apply(undefined);
     };
     BsrMap.prototype.componentDidMount = function () {
-        if (this.props.featureCollectionAsJson) {
-            this.DrawFeatureCollection(this.props.featureCollectionAsJson);
-        }
-        if (this.props.features) {
-            this.source.addFeatures(this.props.features);
-        }
+        var _this = this;
+        this.initMap();
+        setTimeout(function () {
+            if (_this.props.featureCollectionAsJson) {
+                _this.DrawFeatureCollection(_this.props.featureCollectionAsJson);
+            }
+            if (_this.props.features) {
+                _this.source.addFeatures(_this.props.features);
+            }
+        });
         // const format = new GeoJSON();
         // const features = format.readFeatures(json);
         // source.addFeatures(features)

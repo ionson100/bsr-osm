@@ -78,7 +78,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
             type: this.type.description
         });
 
-        this.initMap()
+
 
 
     }
@@ -452,14 +452,17 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
     }
 
     componentDidMount() {
+        this.initMap()
 
+        setTimeout(()=>{
+            if(this.props.featureCollectionAsJson){
+                this.DrawFeatureCollection(this.props.featureCollectionAsJson);
+            }
+            if(this.props.features){
+                this.source.addFeatures(this.props.features)
+            }
+        })
 
-        if(this.props.featureCollectionAsJson){
-            this.DrawFeatureCollection(this.props.featureCollectionAsJson);
-        }
-        if(this.props.features){
-            this.source.addFeatures(this.props.features)
-        }
 
         // const format = new GeoJSON();
         // const features = format.readFeatures(json);
