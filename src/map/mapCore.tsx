@@ -77,6 +77,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
             //@ts-ignored
             type: this.type.description
         });
+        this.initMap()
 
 
 
@@ -452,7 +453,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
     }
 
     componentDidMount() {
-        this.initMap()
+
 
         setTimeout(()=>{
             if(this.props.featureCollectionAsJson){

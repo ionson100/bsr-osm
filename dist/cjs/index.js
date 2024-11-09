@@ -460,6 +460,7 @@ var BsrMap = /** @class */ (function (_super) {
             //@ts-ignored
             type: _this.type.description
         });
+        _this.initMap();
         return _this;
     }
     BsrMap.prototype.initMap = function () {
@@ -776,7 +777,6 @@ var BsrMap = /** @class */ (function (_super) {
     };
     BsrMap.prototype.componentDidMount = function () {
         var _this = this;
-        this.initMap();
         setTimeout(function () {
             if (_this.props.featureCollectionAsJson) {
                 _this.DrawFeatureCollection(_this.props.featureCollectionAsJson);
