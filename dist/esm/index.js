@@ -768,6 +768,7 @@ var BsrMap = /** @class */ (function (_super) {
     };
     BsrMap.prototype.render = function () {
         var _a, _b;
+        console.log(this.props.id);
         return (React.createElement("div", { style: (_a = this.props.style) !== null && _a !== void 0 ? _a : { width: "100%", height: 400 }, id: (_b = this.props.id) !== null && _b !== void 0 ? _b : this.id }));
     };
     return BsrMap;

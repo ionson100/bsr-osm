@@ -27,10 +27,10 @@ export enum EPSG {
 }
 
 export type PropsBsrMap = {
-    option?: OptionOSM
-    featureCollectionAsJson?: string
-    features?: Feature<Geometry>[]
-    id?: string
+    option?: OptionOSM|undefined
+    featureCollectionAsJson?: string|undefined
+    features?: Feature<Geometry>[]|undefined
+    id?: string|undefined
     style?: React.CSSProperties | undefined,
 }
 
@@ -468,6 +468,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
     }
 
     render() {
+        console.log(this.props.id)
         return (
             <div style={this.props.style ?? {width: "100%", height: 400}} id={this.props.id ?? this.id}></div>
         )

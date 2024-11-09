@@ -10,10 +10,10 @@ export declare enum EPSG {
     EPSG_4326 = "EPSG:4326"
 }
 export type PropsBsrMap = {
-    option?: OptionOSM;
-    featureCollectionAsJson?: string;
-    features?: Feature<Geometry>[];
-    id?: string;
+    option?: OptionOSM | undefined;
+    featureCollectionAsJson?: string | undefined;
+    features?: Feature<Geometry>[] | undefined;
+    id?: string | undefined;
     style?: React.CSSProperties | undefined;
 };
 export declare class BsrMap extends React.Component<PropsBsrMap, any> {
