@@ -21,36 +21,37 @@ import {GetPosition, SyncUrl} from "./sync";
 import * as extent from "ol/extent";
 import {transform} from "ol/proj";
 
-export enum EPSG{
+export enum EPSG {
     EPSG_3857 = 'EPSG:3857',
     EPSG_4326 = 'EPSG:4326'
 }
+
 export type PropsBsrMap = {
     option?: OptionOSM
-    featureCollectionAsJson?:string
-    features?:Feature<Geometry>[]
-    id?:string
+    featureCollectionAsJson?: string
+    features?: Feature<Geometry>[]
+    id?: string
     style?: React.CSSProperties | undefined,
 }
 
 
 export class BsrMap extends React.Component<PropsBsrMap, any> {
 
-    private rejectPromise?:(msg:string)=>void
-    private option=this.props.option??{}
-    private id=uuid()
-    private styleOsm: StyleOsm=new StyleOsm(this.option)
+    private rejectPromise?: (msg: string) => void
+    private option = this.props.option ?? {}
+    private id = uuid()
+    private styleOsm: StyleOsm = new StyleOsm(this.option)
     private source = new VectorSource({wrapX: false});
-    private vector: VectorLayer=new VectorLayer({
+    private vector: VectorLayer = new VectorLayer({
         //format: new GeoJSON(),
-        source:this.source,
+        source: this.source,
         style: this.styleOsm.styleFunction
     });
 
     private modify1?: Modify
     private map?: Map
     private draw?: Draw
-    private  syncUnmount?:()=>void;
+    private syncUnmount?: () => void;
     private typles = Object.freeze({
         NONE: Symbol('None'),
         POLYGON: Symbol('Polygon'),
@@ -72,6 +73,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
     constructor(props: Readonly<PropsBsrMap>) {
         super(props);
 
+
         this.draw = new Draw({
             source: this.source,
             //@ts-ignored
@@ -80,14 +82,12 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         this.initMap()
 
 
-
-
     }
 
 
     private initMap() {
         setTimeout(() => {
-            const coordinate=GetPosition(this.option)
+            const coordinate = GetPosition(this.option,this.props.id)
             this.map = new Map(
                 {
                     interactions: defaultInteractions().extend([new Drag(this, this.option),]),
@@ -97,7 +97,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                     }), this.vector!],
 
 
-                    target: this.props.id??this.id,
+                    target: this.props.id ?? this.id,
                     view: new View({
                         //projection: 'EPSG:4326',
                         center: coordinate.center,
@@ -106,7 +106,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                     }),
                 })
 
-            this.syncUnmount=SyncUrl(this.map, this.option)
+            this.syncUnmount = SyncUrl(this.map, this.option,this.props.id)
 
 
             if (this.option.removeDoubleClickZoom) {
@@ -127,9 +127,9 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                             return feature;
                         });
                     if (feature) {
-                        this.option.onClick!(this, feature as Feature,evt)
-                    }else{
-                        this.option.onClick!(this, undefined,evt)
+                        this.option.onClick!(this, feature as Feature, evt)
+                    } else {
+                        this.option.onClick!(this, undefined, evt)
                     }
                 })
 
@@ -167,42 +167,51 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
 
         })
 
+        if (this.props.featureCollectionAsJson) {
+            this.DrawFeatureCollection(this.props.featureCollectionAsJson);
+        }
+        if (this.props.features) {
+
+            this.source.addFeatures(this.props.features)
+        }
+
+
     }
 
-    public GetCurrentEPSGProjection(){
-        return  this.map?.getView().getProjection().getCode();
+    public GetCurrentEPSGProjection() {
+        return this.map?.getView().getProjection().getCode();
 
     }
 
-    public CancelCreate(callback?:()=>void){
+    public CancelCreate(callback?: () => void) {
         this.map!.removeInteraction(this.draw!);
-        if(this.rejectPromise){
+        if (this.rejectPromise) {
             this.rejectPromise('cancel create user')
         }
         if (callback) callback()
 
     }
 
-    public Rotation(rotation:number){
+    public Rotation(rotation: number) {
         this.map?.getView().setRotation(rotation)
     }
 
-    public DrawFeatureCollection(json: string,callback?:()=>void) {
+    public DrawFeatureCollection(json: string, callback?: () => void) {
         const format = new GeoJSON();
         const features = format.readFeatures(json);
         this.source.addFeatures(features)
-        if(callback) callback()
+        if (callback) callback()
     }
 
-    public GetVectorLayer():VectorLayer{
+    public GetVectorLayer(): VectorLayer {
         return this.vector!;
     }
 
-    public GetVectorSource():VectorSource{
+    public GetVectorSource(): VectorSource {
         return this.source;
     }
 
-    public GetMap():Map{
+    public GetMap(): Map {
         return this.map!
     }
 
@@ -223,20 +232,20 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         feature.setStyle(this.styleOsm?.selectStyle())
     }
 
-    public GoTo(center:number[],zoom?:number,rotation?:number){
-        const view=this.map!.getView()
+    public GoTo(center: number[], zoom?: number, rotation?: number) {
+        const view = this.map!.getView()
         view.setCenter(center)
-        if(zoom){
+        if (zoom) {
             view.setZoom(zoom)
         }
-        if(rotation){
+        if (rotation) {
             view.setRotation(rotation)
         }
     }
 
-    public GetMapCoordinate():[number[]|undefined,number|undefined,number]{
-        const view=this.map!.getView()
-        return[view.getCenter(),view.getZoom(),view.getRotation()]
+    public GetMapCoordinate(): [number[] | undefined, number | undefined, number] {
+        const view = this.map!.getView()
+        return [view.getCenter(), view.getZoom(), view.getRotation()]
     }
 
     public GetBound(isJson?: boolean) {
@@ -253,8 +262,8 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         return bound
     }
 
-    public CreateFeature(geometry:'Point'|'LineString'|'Polygon'|'Circle',coordinate:Array<any>,){
-        switch (geometry){
+    public CreateFeature(geometry: 'Point' | 'LineString' | 'Polygon' | 'Circle', coordinate: Array<any>,) {
+        switch (geometry) {
             case 'Point':
 
                 return new Feature({
@@ -276,7 +285,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         }
     }
 
-    public GetFeatures(geometry:'Point'|'LineString'|'Polygon'|'Circle'|undefined) {
+    public GetFeatures(geometry: 'Point' | 'LineString' | 'Polygon' | 'Circle' | undefined) {
 
         switch (geometry) {
             case undefined: {
@@ -314,10 +323,10 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         this.source.removeFeature(f)
     }
 
-    public RemoveAllFeatures(callback?:()=>void) {
+    public RemoveAllFeatures(callback?: () => void) {
         this.source.clear()
         this.map!.removeInteraction(this.draw!);
-        if(this.rejectPromise){
+        if (this.rejectPromise) {
             this.rejectPromise('cancel create user')
         }
         if (callback) callback()
@@ -325,29 +334,30 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
     }
 
 
-     public GetCenterFeature(feature:Feature){
+    public GetCenterFeature(feature: Feature) {
 
-         return extent.getCenter(feature.getGeometry()!.getExtent())
+        return extent.getCenter(feature.getGeometry()!.getExtent())
     }
-    public GetCoordinateFeature(feature:Feature){
-        const geometry=feature.getGeometry();
+
+    public GetCoordinateFeature(feature: Feature) {
+        const geometry = feature.getGeometry();
         if (geometry instanceof SimpleGeometry) {
-           return geometry.getCoordinates();
+            return geometry.getCoordinates();
         } else {
-           return  [];
+            return [];
         }
     }
 
-    public GetFlatCoordinateFeature(feature:Feature){
-        const geometry=feature.getGeometry();
+    public GetFlatCoordinateFeature(feature: Feature) {
+        const geometry = feature.getGeometry();
         if (geometry instanceof SimpleGeometry) {
             return geometry.getFlatCoordinates();
         } else {
-            return  [];
+            return [];
         }
     }
 
-    public TransForm(coordinate:Array<number>,from:EPSG|string, to:EPSG|string):Array<number>{
+    public TransForm(coordinate: Array<number>, from: EPSG | string, to: EPSG | string): Array<number> {
         return transform(coordinate, from, to);
     }
 
@@ -359,11 +369,9 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
     }
 
 
-
-
-    public BuildFeature(geometry:'Polygon'|'LineString'|'Point'|'Circle') {
+    public BuildFeature(geometry: 'Polygon' | 'LineString' | 'Point' | 'Circle') {
         this.CancelCreate();
-        return new Promise<{bsrMap:BsrMap,feature:Feature,geometry:string,json:string}>((resolve, reject) => {
+        return new Promise<{ bsrMap: BsrMap, feature: Feature, geometry: string, json: string }>((resolve, reject) => {
             this.map!.removeInteraction(this.selectAltClick);
             this.map!.removeInteraction(this.modify1!);
             this.draw = new Draw({
@@ -371,20 +379,20 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                 //@ts-ignored
                 type: geometry
             });
-            this.rejectPromise=(msg)=>{
-                this.rejectPromise=undefined
+            this.rejectPromise = (msg) => {
+                this.rejectPromise = undefined
                 reject(msg)
             }
             this.draw.on('drawend', (e) => {
-                this.rejectPromise=undefined
+                this.rejectPromise = undefined
                 const feature: Feature = e.feature;
                 this.map!.removeInteraction(this.draw!);
                 this.editOnlyRouteOrPolygon()
                 resolve({
-                    bsrMap:this,
+                    bsrMap: this,
                     feature: feature,
                     geometry: geometry,
-                    json:this.ConvertFeatureToJson(feature)
+                    json: this.FeatureToJson(feature)
                 })
 
                 // setTimeout(() => {
@@ -397,10 +405,9 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         })
 
 
-
     }
 
-    public StartEditFeature(feature: Feature,callback?:()=>void) {
+    public StartEditFeature(feature: Feature, callback?: () => void) {
         const d: Collection<Feature<Geometry>> = this.selectAltClick.getFeatures();
         if (d.getLength() > 0) {
             this.selectAltClick.getFeatures().clear()
@@ -417,7 +424,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         }
     }
 
-    public ConvertFeatureToJson(f: Feature) {
+    public FeatureToJson(f: Feature) {
         const geoJsonGeom = new GeoJSON();
         const featureClone: Feature<Geometry> = f.clone();
         return geoJsonGeom.writeGeometry(featureClone.getGeometry()!);
@@ -430,7 +437,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         if (this.option.onModifyEnd) {
             this.modify1.on('modifyend', (event) => {
                 event.features.forEach((feature) => {
-                    this.option.onModifyEnd!(this, feature, this.ConvertFeatureToJson(feature))
+                    this.option.onModifyEnd!(this, feature, this.FeatureToJson(feature))
                 });
             });
         }
@@ -443,7 +450,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
      */
 
 
-    public RefreshStyleFeature(feature:Feature) {
+    public RefreshStyleFeature(feature: Feature) {
         feature.setStyle(this.styleOsm!.styleFunction(feature))
     }
 
@@ -455,16 +462,6 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
     componentDidMount() {
 
 
-        setTimeout(()=>{
-            if(this.props.featureCollectionAsJson){
-                this.DrawFeatureCollection(this.props.featureCollectionAsJson);
-            }
-            if(this.props.features){
-                this.source.addFeatures(this.props.features)
-            }
-        })
-
-
         // const format = new GeoJSON();
         // const features = format.readFeatures(json);
         // source.addFeatures(features)
@@ -472,7 +469,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
 
     render() {
         return (
-            <div  style={this.props.style??{width:"100%",height:400}} id={this.props.id??this.id}></div>
+            <div style={this.props.style ?? {width: "100%", height: 400}} id={this.props.id ?? this.id}></div>
         )
 
     }

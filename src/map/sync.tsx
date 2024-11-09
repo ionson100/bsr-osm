@@ -1,7 +1,7 @@
 import {OptionOSM} from "./option";
 import Map from 'ol/Map';
 
-const bsrMap = 'bsr=map'
+const bsrMap = 'bsr-12'
 export type position={
     zoom :number
     center:number[]
@@ -23,7 +23,7 @@ export type position={
 
  }
 
-export function GetPosition(option: OptionOSM):position {
+export function GetPosition(option: OptionOSM,id?:string):position {
     let zoom: number =option.zoom??15;
     let center: number[] = option.center ??[0, 0];// [1608429.01, 6461053.51];
     let rotation = 0;
@@ -36,7 +36,7 @@ export function GetPosition(option: OptionOSM):position {
                 return  res;
             }
         } else {
-            let hash = getCookie(bsrMap)
+            let hash = getCookie(bsrMap+id??'')
             if(hash){
                 const res=parce(hash.replace('#map=', ''))
                 if(res){
@@ -49,7 +49,7 @@ export function GetPosition(option: OptionOSM):position {
     return {zoom, center, rotation};
 }
 
-export function SyncUrl(map: Map, option: OptionOSM) {
+export function SyncUrl(map: Map, option: OptionOSM,id?:string) {
     let shouldUpdate = true;
 
     const popState = (event: HashChangeEvent) => {
@@ -86,7 +86,7 @@ export function SyncUrl(map: Map, option: OptionOSM) {
             rotation: view.getRotation(),
         };
         if(option.useCookiesPosition){
-            setCookie(bsrMap, hash)
+            setCookie(bsrMap+id??'', hash)
         }
 
         window.history.pushState(state, 'map', hash);

@@ -303,7 +303,7 @@ class StyleOsm {
     }
 }
 
-var bsrMap = 'bsr=map';
+var bsrMap = 'bsr-12';
 function parce(hash) {
     if (!hash) {
         return undefined;
@@ -318,8 +318,8 @@ function parce(hash) {
     }
     return undefined;
 }
-function GetPosition(option) {
-    var _a, _b;
+function GetPosition(option, id) {
+    var _a, _b, _c;
     var zoom = (_a = option.zoom) !== null && _a !== void 0 ? _a : 15;
     var center = (_b = option.center) !== null && _b !== void 0 ? _b : [0, 0]; // [1608429.01, 6461053.51];
     var rotation = 0;
@@ -332,7 +332,7 @@ function GetPosition(option) {
             }
         }
         else {
-            var hash = getCookie(bsrMap);
+            var hash = getCookie((_c = bsrMap + id) !== null && _c !== void 0 ? _c : '');
             if (hash) {
                 var res = parce(hash.replace('#map=', ''));
                 if (res) {
@@ -343,7 +343,7 @@ function GetPosition(option) {
     }
     return { zoom: zoom, center: center, rotation: rotation };
 }
-function SyncUrl(map, option) {
+function SyncUrl(map, option, id) {
     var shouldUpdate = true;
     var popState = function (event) {
         var str = window.location.hash.substring(5).split('/');
@@ -356,6 +356,7 @@ function SyncUrl(map, option) {
         shouldUpdate = false;
     };
     var updatePermalink = function () {
+        var _a;
         if (!shouldUpdate) {
             // do not update the URL when the view was changed in the 'popstate' handler
             shouldUpdate = true;
@@ -377,7 +378,7 @@ function SyncUrl(map, option) {
             rotation: view.getRotation(),
         };
         if (option.useCookiesPosition) {
-            setCookie(bsrMap, hash);
+            setCookie((_a = bsrMap + id) !== null && _a !== void 0 ? _a : '', hash);
         }
         window.history.pushState(state, 'map', hash);
     };
@@ -446,7 +447,7 @@ var BsrMap = /** @class */ (function (_super) {
         var _this = this;
         setTimeout(function () {
             var _a;
-            var coordinate = GetPosition(_this.option);
+            var coordinate = GetPosition(_this.option, _this.props.id);
             _this.map = new Map({
                 interactions: defaults().extend([new Drag(_this, _this.option),]),
                 layers: [new TileLayer({
@@ -460,7 +461,7 @@ var BsrMap = /** @class */ (function (_super) {
                     zoom: coordinate.zoom,
                 }),
             });
-            _this.syncUnmount = SyncUrl(_this.map, _this.option);
+            _this.syncUnmount = SyncUrl(_this.map, _this.option, _this.props.id);
             if (_this.option.removeDoubleClickZoom) {
                 // убрали из дефолта двойной клик
                 _this.map.getInteractions().getArray().forEach(function (interaction) {
@@ -506,6 +507,12 @@ var BsrMap = /** @class */ (function (_super) {
                 _this.map.addInteraction(dragBox_1);
             }
         });
+        if (this.props.featureCollectionAsJson) {
+            this.DrawFeatureCollection(this.props.featureCollectionAsJson);
+        }
+        if (this.props.features) {
+            this.source.addFeatures(this.props.features);
+        }
     };
     BsrMap.prototype.GetCurrentEPSGProjection = function () {
         var _a;
@@ -697,7 +704,7 @@ var BsrMap = /** @class */ (function (_super) {
                     bsrMap: _this,
                     feature: feature,
                     geometry: geometry,
-                    json: _this.ConvertFeatureToJson(feature)
+                    json: _this.FeatureToJson(feature)
                 });
                 // setTimeout(() => {
                 //     this.selectAltClick?.getFeatures().clear()
@@ -724,7 +731,7 @@ var BsrMap = /** @class */ (function (_super) {
             callback();
         }
     };
-    BsrMap.prototype.ConvertFeatureToJson = function (f) {
+    BsrMap.prototype.FeatureToJson = function (f) {
         var geoJsonGeom = new GeoJSON();
         var featureClone = f.clone();
         return geoJsonGeom.writeGeometry(featureClone.getGeometry());
@@ -737,7 +744,7 @@ var BsrMap = /** @class */ (function (_super) {
         if (this.option.onModifyEnd) {
             this.modify1.on('modifyend', function (event) {
                 event.features.forEach(function (feature) {
-                    _this.option.onModifyEnd(_this, feature, _this.ConvertFeatureToJson(feature));
+                    _this.option.onModifyEnd(_this, feature, _this.FeatureToJson(feature));
                 });
             });
         }
@@ -755,15 +762,6 @@ var BsrMap = /** @class */ (function (_super) {
         (_a = this.syncUnmount) === null || _a === void 0 ? void 0 : _a.apply(undefined);
     };
     BsrMap.prototype.componentDidMount = function () {
-        var _this = this;
-        setTimeout(function () {
-            if (_this.props.featureCollectionAsJson) {
-                _this.DrawFeatureCollection(_this.props.featureCollectionAsJson);
-            }
-            if (_this.props.features) {
-                _this.source.addFeatures(_this.props.features);
-            }
-        });
         // const format = new GeoJSON();
         // const features = format.readFeatures(json);
         // source.addFeatures(features)

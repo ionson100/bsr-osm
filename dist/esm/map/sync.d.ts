@@ -5,6 +5,6 @@ export type position = {
     center: number[];
     rotation: number;
 };
-export declare function GetPosition(option: OptionOSM): position;
-export declare function SyncUrl(map: Map, option: OptionOSM): () => void;
+export declare function GetPosition(option: OptionOSM, id?: string): position;
+export declare function SyncUrl(map: Map, option: OptionOSM, id?: string): () => void;
 export declare function getCookie(name: string): string | undefined;

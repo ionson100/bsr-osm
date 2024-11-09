@@ -74,7 +74,7 @@ export declare class BsrMap extends React.Component<PropsBsrMap, any> {
     }>;
     StartEditFeature(feature: Feature, callback?: () => void): void;
     FinishEditFeature(callback?: () => void): void;
-    ConvertFeatureToJson(f: Feature): string;
+    FeatureToJson(f: Feature): string;
     private editOnlyRouteOrPolygon;
     /**
      * Перерисовка стилей
