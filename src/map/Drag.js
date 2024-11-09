@@ -1,8 +1,6 @@
 import {Pointer as PointerInteraction} from 'ol/interaction.js';
 import {GeoJSON} from "ol/format";
-import VectorLayer from "ol/layer/Vector";
-import VectorSource from "ol/source/Vector";
-import {styleFunction} from "./myStyle";
+
 
 
 
@@ -93,10 +91,4 @@ export class Drag extends PointerInteraction {
     }
 }
 
-export const source = new VectorSource({wrapX: false});
-export const vector = new VectorLayer({
-    format: new GeoJSON(),
-    source,
-    style: styleFunction
-});
 

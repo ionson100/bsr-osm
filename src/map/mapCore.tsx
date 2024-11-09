@@ -1,5 +1,4 @@
 import React from "react";
-import {v4 as uuid} from 'uuid'
 import TileLayer from "ol/layer/Tile";
 import {OSM} from "ol/source.js";
 import VectorSource from "ol/source/Vector";
@@ -7,59 +6,51 @@ import {GeoJSON} from "ol/format";
 import {defaults as defaultInteractions, Draw, Modify, Select} from "ol/interaction.js";
 import {click, platformModifierKeyOnly} from 'ol/events/condition';
 import View from "ol/View.js";
-
+import {v4 as uuid} from 'uuid'
 import Map from 'ol/Map';
-
-
+//import sync from './ol-hashe';
 import {DoubleClickZoom, DragBox} from "ol/interaction";
-import {Drag, source, vector} from "./Drag";
+import {Drag} from "./Drag";
 import {Collection, Feature, MapBrowserEvent} from "ol";
-import {Geometry} from "ol/geom";
-import {MyGeometry} from "./utils";
+import {Geometry, LineString, Point, Polygon, SimpleGeometry} from "ol/geom";
 
-import {mySelectPolygon, styleFunction} from "./myStyle";
-import {defaultStyle, OptionOSM} from "./option";
-import {Fill, Stroke, Style} from "ol/style";
+import {OptionOSM} from "./option";
+import VectorLayer from "ol/layer/Vector";
+import {StyleOsm} from "./styleOsm";
+import {GetPosition, SyncUrl} from "./sync";
+import * as extent from "ol/extent";
+import {transform} from "ol/proj";
 
-
-const raster = new TileLayer({
-    source: new OSM()
-})
-// const typles = Object.freeze({
-//     NONE: Symbol('None'),
-//     POLYGON: Symbol('Polygon'),
-//     LINE: Symbol('LineString'),
-//     POINT: Symbol('Point')
-// });
-
-//let type = typles.NONE;
-
-
-/**
- *
- */
+export enum EPSG{
+    EPSG_3857 = 'EPSG:3857',
+    EPSG_4326 = 'EPSG:4326'
+}
 export type PropsBsrMap = {
-    option: OptionOSM
+    option?: OptionOSM
+    featureCollectionAsJson?:string
+    features?:Feature<Geometry>[]
+    id?:string
+    style?: React.CSSProperties | undefined,
 }
 
-export class BsrMap extends React.Component<PropsBsrMap, any> {
-    private source: VectorSource<any> = new VectorSource({wrapX: false});
-    private modify1?: Modify
-    private id = uuid()
-    private map?: Map
-    private draw?: Draw
 
-    private selectedStyle = new Style({
-        fill: new Fill({
-            color: 'rgba(255, 255, 255, 0.6)',
-        }),
-        stroke: new Stroke({
-            color: 'rgba(255, 255, 255, 0.7)',
-            width: 2,
-        }),
+export class BsrMap extends React.Component<PropsBsrMap, any> {
+
+    private rejectPromise?:(msg:string)=>void
+    private option=this.props.option??{}
+    private id=uuid()
+    private styleOsm: StyleOsm=new StyleOsm(this.option)
+    private source = new VectorSource({wrapX: false});
+    private vector: VectorLayer=new VectorLayer({
+        //format: new GeoJSON(),
+        source:this.source,
+        style: this.styleOsm.styleFunction
     });
 
-
+    private modify1?: Modify
+    private map?: Map
+    private draw?: Draw
+    private  syncUnmount?:()=>void;
     private typles = Object.freeze({
         NONE: Symbol('None'),
         POLYGON: Symbol('Polygon'),
@@ -74,7 +65,6 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
             click(mapBrowserEvent)
         },
         filter: () => false
-
     });
 
     private type = this.typles.POINT;
@@ -82,40 +72,43 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
     constructor(props: Readonly<PropsBsrMap>) {
         super(props);
 
-        // this.draw = getDraw(source)
         this.draw = new Draw({
-            source,
+            source: this.source,
             //@ts-ignored
             type: this.type.description
         });
-        setTimeout(() => {
-            if (!this.props.option.style) {
-                this.props.option.style = defaultStyle;
-            }
-        })
+
+        this.initMap()
+
 
     }
 
+
     private initMap() {
         setTimeout(() => {
+            const coordinate=GetPosition(this.option)
             this.map = new Map(
                 {
-                    interactions: defaultInteractions().extend([new Drag(this, this.props.option),]),
+                    interactions: defaultInteractions().extend([new Drag(this, this.option),]),
 
                     layers: [new TileLayer({
                         source: new OSM(),
-                    }), vector],
+                    }), this.vector!],
 
 
-                    target: 'map',
+                    target: this.props.id??this.id,
                     view: new View({
-                        center: this.props.option.center ?? [1608429.01, 6461053.51],//[2297310.350254958, 7242755.816153312],
-                        zoom: this.props.option.zoom ?? 15,
+                        //projection: 'EPSG:4326',
+                        center: coordinate.center,
+                        rotation: coordinate.rotation,
+                        zoom: coordinate.zoom,
                     }),
                 })
 
+            this.syncUnmount=SyncUrl(this.map, this.option)
 
-            if (this.props.option.removeDoubleClickZoom) {
+
+            if (this.option.removeDoubleClickZoom) {
                 // убрали из дефолта двойной клик
                 this.map.getInteractions().getArray().forEach((interaction) => {
                     if (interaction instanceof DoubleClickZoom) {
@@ -124,8 +117,8 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                     }
                 });
             }
-            // sync(this.map);
-            if (this.props.option.onClick) {
+
+            if (this.option.onClick) {
                 this.map.on("click", (evt: MapBrowserEvent<any>) => {
 
                     const feature = this.map!.forEachFeatureAtPixel(evt.pixel,
@@ -133,36 +126,37 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                             return feature;
                         });
                     if (feature) {
-
-                        this.props.option.onClick!(this, feature as Feature)
+                        this.option.onClick!(this, feature as Feature,evt)
+                    }else{
+                        this.option.onClick!(this, undefined,evt)
                     }
                 })
 
             }
 
-            if (this.props.option.onShowContextMenu) {
+            if (this.option.onShowContextMenu) {
                 this.map.getViewport().addEventListener('contextmenu', (e) => {
                     e.preventDefault();
                     const feature = this.map!.forEachFeatureAtPixel([e.offsetX, e.offsetY],
                         function (feature) {
                             return feature;
                         });
-                    this.props.option.onShowContextMenu!(this, feature as Feature, e);
+                    this.option.onShowContextMenu!(this, feature as Feature, e);
                 });
             }
 
 
-            if (this.props.option.useDrawBox) {
+            if (this.option.useDrawBox) {
                 const dragBox = new DragBox({
                     condition: platformModifierKeyOnly,
-                    className: "box"
+                    className: "box-123"
                 });
-                if (this.props.option.onDrawBoxEnd) {
+                if (this.option.onDrawBoxEnd) {
                     dragBox.on('boxend', () => {
 
                         const boxExtent: Array<number> = dragBox.getGeometry().getExtent();
-                        const boxFeatures = source.getFeaturesInExtent(boxExtent)
-                        this.props.option.onDrawBoxEnd!(this, boxFeatures, boxExtent)
+                        const boxFeatures = this.source.getFeaturesInExtent(boxExtent)
+                        this.option.onDrawBoxEnd!(this, boxFeatures, boxExtent)
                     })
                 }
 
@@ -174,34 +168,77 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
 
     }
 
-    public DrawFeatureCollection(json: string) {
-        const format = new GeoJSON();
-        const features = format.readFeatures(json);
-        source.addFeatures(features)
+    public GetCurrentEPSGProjection(){
+        return  this.map?.getView().getProjection().getCode();
+
     }
 
+    public CancelCreate(callback?:()=>void){
+        this.map!.removeInteraction(this.draw!);
+        if(this.rejectPromise){
+            this.rejectPromise('cancel create user')
+        }
+        if (callback) callback()
+
+    }
+
+    public Rotation(rotation:number){
+        this.map?.getView().setRotation(rotation)
+    }
+
+    public DrawFeatureCollection(json: string,callback?:()=>void) {
+        const format = new GeoJSON();
+        const features = format.readFeatures(json);
+        this.source.addFeatures(features)
+        if(callback) callback()
+    }
+
+    public GetVectorLayer():VectorLayer{
+        return this.vector!;
+    }
+
+    public GetVectorSource():VectorSource{
+        return this.source;
+    }
+
+    public GetMap():Map{
+        return this.map!
+    }
 
     /**
      * Перерисовка стилей
      */
     public RefreshStyleFeatures() {
 
-        source.getFeatures().map((f) => {
-            f.setStyle(styleFunction)
+        this.source.getFeatures().forEach((f) => {
+
+            f.setStyle(this.styleOsm.styleFunction)
         })
     }
 
     public SelectStyleFeature(feature: Feature) {
 
         this.RefreshStyleFeatures();
-        feature.setStyle(mySelectPolygon)
+        feature.setStyle(this.styleOsm?.selectStyle())
     }
 
-    /**
-     * получение границ карты в браузере
-     * @returns {*}
-     */
-    public getBound(isJson?: boolean) {
+    public GoTo(center:number[],zoom?:number,rotation?:number){
+        const view=this.map!.getView()
+        view.setCenter(center)
+        if(zoom){
+            view.setZoom(zoom)
+        }
+        if(rotation){
+            view.setRotation(rotation)
+        }
+    }
+
+    public GetMapCoordinate():[number[]|undefined,number|undefined,number]{
+        const view=this.map!.getView()
+        return[view.getCenter(),view.getZoom(),view.getRotation()]
+    }
+
+    public GetBound(isJson?: boolean) {
         const extent = this.map!.getView().calculateExtent(this.map!.getSize());
         const bound: { p1?: number[], p2?: number[], p3?: number[], p4?: number[], p5?: number[] } = {};
         bound.p1 = [extent[0], extent[3]]
@@ -215,134 +252,161 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         return bound
     }
 
-    public getFeatures(geo?: MyGeometry) {
+    public CreateFeature(geometry:'Point'|'LineString'|'Polygon'|'Circle',coordinate:Array<any>,){
+        switch (geometry){
+            case 'Point':
 
-        switch (geo) {
+                return new Feature({
+                    geometry: new Point(coordinate),
+                });
+            case 'LineString':
+
+                return new Feature({
+                    geometry: new LineString(coordinate),
+                });
+            case 'Polygon':
+
+                return new Feature({
+                    geometry: new Polygon(coordinate),
+                });
+            case 'Circle':
+                break;
+
+        }
+    }
+
+    public GetFeatures(geometry:'Point'|'LineString'|'Polygon'|'Circle'|undefined) {
+
+        switch (geometry) {
             case undefined: {
-                return source.getFeatures()
-                break
+                return this.source.getFeatures()
+
             }
-            case MyGeometry.point: {
-                return source.getFeatures().filter(f => {
-                    return f.getGeometry()?.getType().toString() === 'Point'
+            case 'Point': {
+                return this.source.getFeatures().filter(f => {
+                    return f.getGeometry()?.getType() === 'Point'
                 })
             }
-            case MyGeometry.line: {
-                return source.getFeatures().filter(f => {
-                    return f.getGeometry()?.getType().toString() === 'Line'
+            case 'LineString': {
+                return this.source.getFeatures().filter(f => {
+                    return f.getGeometry()?.getType() === 'LineString'
                 })
             }
-            case MyGeometry.polygon: {
-                return source.getFeatures().filter(f => {
-                    return f.getGeometry()?.getType().toString() === 'Polygon'
+            case 'Polygon': {
+                return this.source.getFeatures().filter(f => {
+                    return f.getGeometry()?.getType() === 'Polygon'
+                })
+            }
+            case 'Circle': {
+                return this.source.getFeatures().filter(f => {
+                    return f.getGeometry()?.getType() === 'Circle'
                 })
             }
         }
     }
 
-    public addFeatures(f: Feature[]) {
-        source.addFeatures(f)
+    public AddFeatures(f: Feature[]) {
+        this.source.addFeatures(f)
     }
 
-    public removeFeature(f: Feature) {
-        source.removeFeature(f)
+    public RemoveFeature(f: Feature) {
+        this.source.removeFeature(f)
     }
 
-    public removeAllFeatures() {
-        source.clear()
+    public RemoveAllFeatures(callback?:()=>void) {
+        this.source.clear()
         this.map!.removeInteraction(this.draw!);
-        // InitMenuCurrentRoute(undefined)
+        if(this.rejectPromise){
+            this.rejectPromise('cancel create user')
+        }
+        if (callback) callback()
 
     }
 
-    public CreateRoute() {
-        this.map!.removeInteraction(this.selectAltClick);
 
-        this.map!.removeInteraction(this.modify1!);
-        this.allowDrawFeature(2);
-        return true;
+     public GetCenterFeature(feature:Feature){
+
+         return extent.getCenter(feature.getGeometry()!.getExtent())
+    }
+    public GetCoordinateFeature(feature:Feature){
+        const geometry=feature.getGeometry();
+        if (geometry instanceof SimpleGeometry) {
+           return geometry.getCoordinates();
+        } else {
+           return  [];
+        }
     }
 
-    public CreatePolygon() {
-        this.map!.removeInteraction(this.selectAltClick);
-        this.map!.removeInteraction(this.modify1!);
-        this.allowDrawFeature(1);
-        return true;
+    public GetFlatCoordinateFeature(feature:Feature){
+        const geometry=feature.getGeometry();
+        if (geometry instanceof SimpleGeometry) {
+            return geometry.getFlatCoordinates();
+        } else {
+            return  [];
+        }
     }
-    public CreatePoint() {
-        this.map!.removeInteraction(this.selectAltClick);
-        this.map!.removeInteraction(this.modify1!);
-        this.allowDrawFeature(3);
-        return true;
-    }
-    public CreateCircle() {
-        this.map!.removeInteraction(this.selectAltClick);
-        this.map!.removeInteraction(this.modify1!);
-        this.allowDrawFeature(4);
-        return true;
+
+    public TransForm(coordinate:Array<number>,from:EPSG|string, to:EPSG|string):Array<number>{
+        return transform(coordinate, from, to);
     }
 
     /**
      * возврат точки при создании маршрута или полигона
      */
-    undo() {
+    public Undo() {
         this.draw?.removeLastPoint();
     }
 
 
-    private allowDrawFeature(index = 0) {
-        switch (index) {
-            case 1: {
-                this.type = this.typles.POLYGON;
-                break;
-            }
-            case 2: {
-                this.type = this.typles.LINE;
-                break;
-            }
-            case 3: {
-                this.type = this.typles.POINT;
-                break;
-            }
-            case 4: {
-                this.type = this.typles.CIRCLE;
-                break;
-            }
-            default: {
-                this.type = this.typles.NONE;
-            }
-        }
 
-        this.draw = new Draw({
-            source,
-            //@ts-ignored
-            type: this.type.description
-        });
-        this.draw.on('drawend', (e) => {
-            const feature: Feature = e.feature;
-            this.map!.removeInteraction(this.draw!);
-            this.editOnlyRouteOrPolygon()
-            if (this.props.option.onDrawEnd) {
-                this.props.option.onDrawEnd(this, feature, this.ConvertFeatureToJson(feature))
-            }
-            setTimeout(() => {
-                this.selectAltClick?.getFeatures().clear()
-                this.selectAltClick.getFeatures().push(feature)
-            }, 500)
-        });
 
-        this.map!.addInteraction(this.draw!);
+    public BuildFeature(geometry:'Polygon'|'LineString'|'Point'|'Circle') {
+        this.CancelCreate();
+        return new Promise<{bsrMap:BsrMap,feature:Feature,geometry:string,json:string}>((resolve, reject) => {
+            this.map!.removeInteraction(this.selectAltClick);
+            this.map!.removeInteraction(this.modify1!);
+            this.draw = new Draw({
+                source: this.source,
+                //@ts-ignored
+                type: geometry
+            });
+            this.rejectPromise=(msg)=>{
+                this.rejectPromise=undefined
+                reject(msg)
+            }
+            this.draw.on('drawend', (e) => {
+                this.rejectPromise=undefined
+                const feature: Feature = e.feature;
+                this.map!.removeInteraction(this.draw!);
+                this.editOnlyRouteOrPolygon()
+                resolve({
+                    bsrMap:this,
+                    feature: feature,
+                    geometry: geometry,
+                    json:this.ConvertFeatureToJson(feature)
+                })
+
+                // setTimeout(() => {
+                //     this.selectAltClick?.getFeatures().clear()
+                //     this.selectAltClick.getFeatures().push(feature)
+                // }, 500)
+            });
+
+            this.map!.addInteraction(this.draw!);
+        })
+
 
 
     }
 
-    public StartEditFeature(feature: Feature) {
+    public StartEditFeature(feature: Feature,callback?:()=>void) {
         const d: Collection<Feature<Geometry>> = this.selectAltClick.getFeatures();
         if (d.getLength() > 0) {
             this.selectAltClick.getFeatures().clear()
         } else {
             this.selectAltClick.getFeatures().push(feature)
         }
+        if (callback) callback()
     }
 
     public FinishEditFeature(callback?: () => void) {
@@ -362,10 +426,10 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         this.modify1 = new Modify({
             features: this.selectAltClick.getFeatures()
         });
-        if (this.props.option.onModifyEnd) {
+        if (this.option.onModifyEnd) {
             this.modify1.on('modifyend', (event) => {
                 event.features.forEach((feature) => {
-                    this.props.option.onModifyEnd!(this, feature, this.ConvertFeatureToJson(feature))
+                    this.option.onModifyEnd!(this, feature, this.ConvertFeatureToJson(feature))
                 });
             });
         }
@@ -378,16 +442,25 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
      */
 
 
-    refreshStyleFeaturesPolygon() {
-        source.getFeatures().map((f) => {
-
-            f.setStyle(styleFunction)
-        })
+    public RefreshStyleFeature(feature:Feature) {
+        feature.setStyle(this.styleOsm!.styleFunction(feature))
     }
 
 
+    componentWillUnmount() {
+        this.syncUnmount?.apply(undefined)
+    }
+
     componentDidMount() {
-        this.initMap()
+
+
+        if(this.props.featureCollectionAsJson){
+            this.DrawFeatureCollection(this.props.featureCollectionAsJson);
+        }
+        if(this.props.features){
+            this.source.addFeatures(this.props.features)
+        }
+
         // const format = new GeoJSON();
         // const features = format.readFeatures(json);
         // source.addFeatures(features)
@@ -395,7 +468,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
 
     render() {
         return (
-            <div style={{width: "100%", height: "100%"}} id={'map'}></div>
+            <div  style={this.props.style??{width:"100%",height:400}} id={this.props.id??this.id}></div>
         )
 
     }

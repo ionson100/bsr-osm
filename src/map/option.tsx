@@ -1,5 +1,5 @@
-import {FeatureLike} from "ol/Feature";
-import {Feature} from "ol";
+
+import {Feature, MapBrowserEvent} from "ol";
 import {Geometry} from "ol/geom";
 import {BsrMap} from "./mapCore";
 
@@ -10,38 +10,28 @@ export type OptionOSM = {
      */
     center?: Array<number>
     removeDoubleClickZoom?: boolean
-    onClick?: (map:BsrMap,feature: Feature | undefined) => void
+    onClick?: (map:BsrMap,feature: Feature | undefined,evt: MapBrowserEvent<any>) => void
     onShowContextMenu?:(map:BsrMap,feature: Feature<Geometry> | undefined,e: MouseEvent)=>void
     onModifyEnd?:(map:BsrMap,feature: Feature<Geometry>,json:string)=>void
     onDrawEnd?:(map:BsrMap,feature:Feature,json:string)=>void
     onDragEnd?:(map:BsrMap, feature:Feature, json:string)=>void
     onDrawBoxEnd?:(map:BsrMap, features:Feature<Geometry>[],extend:Array<number>)=>void
     useDrawBox?:boolean
-    style?:Style
+    style?:StyleSettings
+    useSynchronizationUrl?:boolean
+    useCookiesPosition?:boolean
 
 
 }
-export type Style={
-    colorRoute:'#179a1c'
-    widthRoute:4
+export type StyleSettings ={
+    colorLineString?:string
+    widthLineString?:number
 
-    colorPolygon:'#07720d'
-    widthPolygon:3;
-    fillPolygon:'#F8F9F4'
+    colorPolygon?:string
+    widthPolygon?:number;
+    fillPolygon?:string
 
-    colorPolygonSelect:'#f80622'
-    widthPolygonSelect:3;
-    fillPolygonSelect:'#F8F9F4'
-}
- export const defaultStyle:Style={
-    colorRoute:'#179a1c',
-    widthRoute:4,
-
-    colorPolygon:'#07720d',
-    widthPolygon:3,
-    fillPolygon:'#F8F9F4',
-
-    colorPolygonSelect:'#f80622',
-    widthPolygonSelect:3,
-    fillPolygonSelect:'#F8F9F4'
+    colorPolygonSelect?:string
+    widthPolygonSelect?:number
+    fillPolygonSelect?:string
 }

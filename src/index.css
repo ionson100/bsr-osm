@@ -41,8 +41,3 @@ html, body {
     margin: 2px 10px 10px 10px;
     width: 270px;
 }
-.box{
-    border: 1px solid black;
-    background: #ffffff;
-    opacity: .5;
-}
