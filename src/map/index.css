@@ -3,6 +3,11 @@
     background: #ffffff;
     opacity: .5;
 }
-.ol-overlaycontainer-stopevent{
-    width: 400px !important;
+.bsr-map-context-menu{
+    position: absolute;
+    top: 220px;
+    left: 220px;
+    padding: 5px;
+    border: 1px #282c34 solid;
+    background-color: #dedcdc;
 }

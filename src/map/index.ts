@@ -1,10 +1,11 @@
-import {BsrMap,EPSG} from "./mapCore";
+import {BsrMap} from "./mapCore";
+import {ProxyMenuDialog} from './contextMap'
 import {OptionOSM,StyleSettings} from "./option";
 
 
 export type {
-    EPSG,OptionOSM,StyleSettings
+    OptionOSM,StyleSettings
 }
 export {
-    BsrMap
+    BsrMap,ProxyMenuDialog
 }

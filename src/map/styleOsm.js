@@ -7,15 +7,35 @@ export class StyleOsm {
 
     constructor(option) {
         this.option = option
-        this.styles = ({
+        this.styles = {};
+        this.refreshStyleSettings()
+
+        this.stylesSelect = new Style({
+            fill: new Fill({
+                color: this.hexToRgbAEx(this.option.style?.fillPolygonSelect ?? '#F8F9F4'),
+            }),
+            stroke: new Stroke({
+                color: option.style?.colorPolygonSelect ?? '#f80622',
+                width: option.style?.widthPolygonSelect ?? 3
+            }),
+            image: new CircleStyle({
+                radius: 7,
+                fill: new Fill({
+                    color: '#f80622'
+                })
+            })
+        })
+    }
+    refreshStyleSettings(){
+        this.styles={
 
             'LineString': new Style({
                 fill: new Fill({
                     color: 'rgb(167,81,81)'
                 }),
                 stroke: new Stroke({
-                    color: option.style?.colorRoute ?? '#179a1c',
-                    width: option.style?.widthRoute ?? 4
+                    color: this.option.style?.colorLineString ?? '#179a1c',
+                    width: this.option.style?.widthLineString ?? 4
                 }),
                 image: new CircleStyle({
                     radius: 7,
@@ -29,8 +49,8 @@ export class StyleOsm {
                     color: this.hexToRgbAEx(this.option.style?.fillPolygon ?? '#F8F9F4'),
                 }),
                 stroke: new Stroke({
-                    color: option.style?.colorPolygon ?? '#07720d',
-                    width: option.style?.widthPolygon ?? 3
+                    color: this.option.style?.colorPolygon ?? '#07720d',
+                    width: this.option.style?.widthPolygon ?? 3
                 }),
                 image: new CircleStyle({
                     radius: 7,
@@ -41,52 +61,25 @@ export class StyleOsm {
             }),
             'Circle': new Style({
                 fill: new Fill({
-                    color: 'rgba(255, 255, 255, 0.2)'
+                    color: this.hexToRgbAEx(this.option.style?.fillCircle??'#dd2e2e')
                 }),
                 stroke: new Stroke({
-                    color: '#03e80e',
-                    width: 3
+                    color: this.option.style?.colorCircle??'#24f22e',
+                    width: this.option.style?.widthCircle??10
                 }),
-                image: new CircleStyle({
-                    radius: 7,
-                    fill: new Fill({
-                        color: '#ffcc33'
-                    })
-                })
+
             }),
 
             'Point': new Style({
-                fill: new Fill({
-                    color: 'rgba(182,85,85,0.2)'
-                }),
-                stroke: new Stroke({
-                    color: '#03e80e',
-                    width: 3
-                }),
                 image: new CircleStyle({
-                    radius: 12,
+                    radius: this.option.style?.radiusPoint??5,
                     fill: new Fill({
-                        color: '#a88007'
+                        color: this.option.style?.colorPoint??'#0324fb'
                     })
                 })
             }),
 
-        });
-        this.stylesSelect = new Style({
-            fill: new Fill({
-                color: this.hexToRgbAEx(this.option.style?.fillPolygonSelect ?? '#F8F9F4'),
-            }),
-            stroke: new Stroke({
-                color: option.style?.colorPolygonSelect ?? '#f80622',
-                width: option.style?.widthPolygonSelect ?? 3
-            }),
-            image: new CircleStyle({
-                radius: 7,
-                fill: new Fill({
-                    color: '#4eff33'
-                })
-            })
-        })
+        }
     }
 
     styleFunction = (feature) => {

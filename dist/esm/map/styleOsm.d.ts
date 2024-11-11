@@ -1,13 +1,9 @@
 export class StyleOsm {
     constructor(option: any);
     option: any;
-    styles: {
-        LineString: Style;
-        Polygon: Style;
-        Circle: Style;
-        Point: Style;
-    };
+    styles: {};
     stylesSelect: Style;
+    refreshStyleSettings(): void;
     styleFunction: (feature: any) => any;
     selectStyle: () => Style;
     hexToRgbAEx(color: any): string;

@@ -20,6 +20,8 @@ export type OptionOSM = {
     style?:StyleSettings
     useSynchronizationUrl?:boolean
     useCookiesPosition?:boolean
+    sourceUrl?:string
+    projection?: 'EPSG:4326'|'EPSG:3857'|string|undefined,
 
 
 }
@@ -34,4 +36,11 @@ export type StyleSettings ={
     colorPolygonSelect?:string
     widthPolygonSelect?:number
     fillPolygonSelect?:string
+
+    colorCircle?:string
+    fillCircle?:string
+    widthCircle?:number
+
+    colorPoint?:string
+    radiusPoint?:number
 }

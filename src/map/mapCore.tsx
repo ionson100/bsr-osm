@@ -1,4 +1,5 @@
 import React from "react";
+import 'ol/ol.css';
 import TileLayer from "ol/layer/Tile";
 import {OSM} from "ol/source.js";
 import VectorSource from "ol/source/Vector";
@@ -8,23 +9,20 @@ import {click, platformModifierKeyOnly} from 'ol/events/condition';
 import View from "ol/View.js";
 import {v4 as uuid} from 'uuid'
 import Map from 'ol/Map';
-//import sync from './ol-hashe';
 import {DoubleClickZoom, DragBox} from "ol/interaction";
 import {Drag} from "./Drag";
 import {Collection, Feature, MapBrowserEvent} from "ol";
-import {Geometry, LineString, Point, Polygon, SimpleGeometry} from "ol/geom";
+import {Geometry,  SimpleGeometry} from "ol/geom";
 
 import {OptionOSM} from "./option";
 import VectorLayer from "ol/layer/Vector";
 import {StyleOsm} from "./styleOsm";
 import {GetPosition, SyncUrl} from "./sync";
 import * as extent from "ol/extent";
-import {transform} from "ol/proj";
 
-export enum EPSG {
-    EPSG_3857 = 'EPSG:3857',
-    EPSG_4326 = 'EPSG:4326'
-}
+
+
+
 
 export type PropsBsrMap = {
     option?: OptionOSM|undefined
@@ -37,11 +35,13 @@ export type PropsBsrMap = {
 
 export class BsrMap extends React.Component<PropsBsrMap, any> {
 
+    private isDispose=false;
+    private refDivMap=React.createRef<HTMLDivElement>()
     private rejectPromise?: (msg: string) => void
     private option = this.props.option ?? {}
     private id = uuid()
     private styleOsm: StyleOsm = new StyleOsm(this.option)
-    private source = new VectorSource({wrapX: false});
+    private source = new VectorSource({wrapX: false,url:this.option.sourceUrl});
     private vector: VectorLayer = new VectorLayer({
         //format: new GeoJSON(),
         source: this.source,
@@ -83,6 +83,19 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
 
 
     }
+    Dispose(callback?:()=>void){
+        if(!this.isDispose){
+            this.map!.getAllLayers().forEach((layer) => {
+                layer.getSource()?.dispose();
+                layer.dispose();
+            });
+            this.map!.getView().dispose();
+            this.map!.dispose();
+            this.isDispose=true;
+            if(callback) callback()
+
+        }
+    }
 
 
     private initMap() {
@@ -90,6 +103,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
             const coordinate = GetPosition(this.option,this.props.id)
             this.map = new Map(
                 {
+
                     interactions: defaultInteractions().extend([new Drag(this, this.option),]),
 
                     layers: [new TileLayer({
@@ -99,12 +113,14 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
 
                     target: this.props.id ?? this.id,
                     view: new View({
-                        //projection: 'EPSG:4326',
+                        projection: this.option.projection??'EPSG:3857',
                         center: coordinate.center,
                         rotation: coordinate.rotation,
                         zoom: coordinate.zoom,
                     }),
                 })
+
+            //this.map.addControl(new ZoomSlider());
 
             this.syncUnmount = SyncUrl(this.map, this.option,this.props.id)
 
@@ -177,6 +193,9 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
 
 
     }
+    public GetDivMap(){
+        return this.refDivMap.current!
+    }
 
     public GetCurrentEPSGProjection() {
         return this.map?.getView().getProjection().getCode();
@@ -225,11 +244,19 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
             f.setStyle(this.styleOsm.styleFunction)
         })
     }
+    public RefreshStyleSettings(){
+        this.styleOsm.refreshStyleSettings()
+    }
 
-    public SelectStyleFeature(feature: Feature) {
-
+    public SelectFeature(feature: Feature) {
         this.RefreshStyleFeatures();
         feature.setStyle(this.styleOsm?.selectStyle())
+    }
+    public SelectFeatures(features: Feature[]) {
+        this.RefreshStyleFeatures();
+        features.forEach(f=>{
+            f.setStyle(this.styleOsm?.selectStyle())
+        })
     }
 
     public GoTo(center: number[], zoom?: number, rotation?: number) {
@@ -243,9 +270,13 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         }
     }
 
-    public GetMapCoordinate(): [number[] | undefined, number | undefined, number] {
+    public GetMapCoordinate(): {center?:number[],zoom?:number,rotation:number} {
         const view = this.map!.getView()
-        return [view.getCenter(), view.getZoom(), view.getRotation()]
+        return {
+            center:view.getCenter(),
+            zoom:    view.getZoom(),
+            rotation:view.getRotation()
+        }
     }
 
     public GetBound(isJson?: boolean) {
@@ -262,28 +293,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         return bound
     }
 
-    public CreateFeature(geometry: 'Point' | 'LineString' | 'Polygon' | 'Circle', coordinate: Array<any>,) {
-        switch (geometry) {
-            case 'Point':
 
-                return new Feature({
-                    geometry: new Point(coordinate),
-                });
-            case 'LineString':
-
-                return new Feature({
-                    geometry: new LineString(coordinate),
-                });
-            case 'Polygon':
-
-                return new Feature({
-                    geometry: new Polygon(coordinate),
-                });
-            case 'Circle':
-                break;
-
-        }
-    }
 
     public GetFeatures(geometry: 'Point' | 'LineString' | 'Polygon' | 'Circle' | undefined) {
 
@@ -319,11 +329,11 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         this.source.addFeatures(f)
     }
 
-    public RemoveFeature(f: Feature) {
+    public DeleteFeature(f: Feature) {
         this.source.removeFeature(f)
     }
 
-    public RemoveAllFeatures(callback?: () => void) {
+    public DeleteAllFeatures(callback?: () => void) {
         this.source.clear()
         this.map!.removeInteraction(this.draw!);
         if (this.rejectPromise) {
@@ -334,8 +344,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
     }
 
 
-    public GetCenterFeature(feature: Feature) {
-
+    public GetCenterFeature(feature: Feature):Array<number> {
         return extent.getCenter(feature.getGeometry()!.getExtent())
     }
 
@@ -357,19 +366,21 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         }
     }
 
-    public TransForm(coordinate: Array<number>, from: EPSG | string, to: EPSG | string): Array<number> {
-        return transform(coordinate, from, to);
-    }
+
 
     /**
-     * возврат точки при создании маршрута или полигона
+     * remove last point when creating a feature
      */
     public Undo() {
         this.draw?.removeLastPoint();
     }
 
 
-    public BuildFeature(geometry: 'Polygon' | 'LineString' | 'Point' | 'Circle') {
+    /**
+     * Build, create feature
+     * @param geometry 'Polygon' | 'LineString' | 'Point' | 'Circle'
+     */
+    public CreateFeature(geometry: 'Polygon' | 'LineString' | 'Point' | 'Circle') {
         this.CancelCreate();
         return new Promise<{ bsrMap: BsrMap, feature: Feature, geometry: string, json: string }>((resolve, reject) => {
             this.map!.removeInteraction(this.selectAltClick);
@@ -387,7 +398,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                 this.rejectPromise = undefined
                 const feature: Feature = e.feature;
                 this.map!.removeInteraction(this.draw!);
-                this.editOnlyRouteOrPolygon()
+               // this.editOnlyRouteOrPolygon()
                 resolve({
                     bsrMap: this,
                     feature: feature,
@@ -395,10 +406,6 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                     json: this.FeatureToJson(feature)
                 })
 
-                // setTimeout(() => {
-                //     this.selectAltClick?.getFeatures().clear()
-                //     this.selectAltClick.getFeatures().push(feature)
-                // }, 500)
             });
 
             this.map!.addInteraction(this.draw!);
@@ -407,16 +414,25 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
 
     }
 
-    public StartEditFeature(feature: Feature, callback?: () => void) {
+    /**
+     * start edit feature
+     * @param feature Feature<Geometry>
+     * @param callback callback function
+     */
+    public StartEditFeature(feature: Feature<Geometry>, callback?: () => void) {
         const d: Collection<Feature<Geometry>> = this.selectAltClick.getFeatures();
         if (d.getLength() > 0) {
             this.selectAltClick.getFeatures().clear()
         } else {
             this.selectAltClick.getFeatures().push(feature)
+            this.editOnlyRouteOrPolygon()
         }
         if (callback) callback()
     }
 
+    /**
+     * end of editing feature
+     */
     public FinishEditFeature(callback?: () => void) {
         this.selectAltClick.getFeatures().clear()
         if (callback) {
@@ -424,6 +440,11 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         }
     }
 
+    /**
+     * Assigning default styles
+     * @param f target feature
+     * @constructor
+     */
     public FeatureToJson(f: Feature) {
         const geoJsonGeom = new GeoJSON();
         const featureClone: Feature<Geometry> = f.clone();
@@ -446,10 +467,8 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
     }
 
     /**
-     * Перерисовка стилей
+     * Redrawing features styles
      */
-
-
     public RefreshStyleFeature(feature: Feature) {
         feature.setStyle(this.styleOsm!.styleFunction(feature))
     }
@@ -459,20 +478,12 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         this.syncUnmount?.apply(undefined)
     }
 
-    componentDidMount() {
-
-
-        // const format = new GeoJSON();
-        // const features = format.readFeatures(json);
-        // source.addFeatures(features)
-    }
-
     render() {
-        console.log(this.props.id)
         return (
-            <div style={this.props.style ?? {width: "100%", height: 400}} id={this.props.id ?? this.id}></div>
+            <div ref={this.refDivMap} style={this.props.style ?? {width: "100%", height: 400}} id={this.props.id ?? this.id}></div>
         )
 
     }
 
 }
+

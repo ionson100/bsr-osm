@@ -1,4 +1,5 @@
 import React from 'react';
+import 'ol/ol.css';
 import TileLayer from 'ol/layer/Tile';
 import { OSM } from 'ol/source.js';
 import VectorSource from 'ol/source/Vector';
@@ -8,12 +9,11 @@ import { click, platformModifierKeyOnly } from 'ol/events/condition';
 import View from 'ol/View.js';
 import Map from 'ol/Map';
 import { DoubleClickZoom, DragBox } from 'ol/interaction';
-import { Feature } from 'ol';
-import { Polygon, LineString, Point, SimpleGeometry } from 'ol/geom';
+import { SimpleGeometry } from 'ol/geom';
 import VectorLayer from 'ol/layer/Vector';
 import { Style, Fill, Stroke, Circle } from 'ol/style';
 import * as extent from 'ol/extent';
-import { transform } from 'ol/proj';
+import { createRoot } from 'react-dom/client';
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -195,15 +195,35 @@ class StyleOsm {
 
     constructor(option) {
         this.option = option;
-        this.styles = ({
+        this.styles = {};
+        this.refreshStyleSettings();
+
+        this.stylesSelect = new Style({
+            fill: new Fill({
+                color: this.hexToRgbAEx(this.option.style?.fillPolygonSelect ?? '#F8F9F4'),
+            }),
+            stroke: new Stroke({
+                color: option.style?.colorPolygonSelect ?? '#f80622',
+                width: option.style?.widthPolygonSelect ?? 3
+            }),
+            image: new Circle({
+                radius: 7,
+                fill: new Fill({
+                    color: '#f80622'
+                })
+            })
+        });
+    }
+    refreshStyleSettings(){
+        this.styles={
 
             'LineString': new Style({
                 fill: new Fill({
                     color: 'rgb(167,81,81)'
                 }),
                 stroke: new Stroke({
-                    color: option.style?.colorRoute ?? '#179a1c',
-                    width: option.style?.widthRoute ?? 4
+                    color: this.option.style?.colorLineString ?? '#179a1c',
+                    width: this.option.style?.widthLineString ?? 4
                 }),
                 image: new Circle({
                     radius: 7,
@@ -217,8 +237,8 @@ class StyleOsm {
                     color: this.hexToRgbAEx(this.option.style?.fillPolygon ?? '#F8F9F4'),
                 }),
                 stroke: new Stroke({
-                    color: option.style?.colorPolygon ?? '#07720d',
-                    width: option.style?.widthPolygon ?? 3
+                    color: this.option.style?.colorPolygon ?? '#07720d',
+                    width: this.option.style?.widthPolygon ?? 3
                 }),
                 image: new Circle({
                     radius: 7,
@@ -229,52 +249,25 @@ class StyleOsm {
             }),
             'Circle': new Style({
                 fill: new Fill({
-                    color: 'rgba(255, 255, 255, 0.2)'
+                    color: this.hexToRgbAEx(this.option.style?.fillCircle??'#dd2e2e')
                 }),
                 stroke: new Stroke({
-                    color: '#03e80e',
-                    width: 3
+                    color: this.option.style?.colorCircle??'#24f22e',
+                    width: this.option.style?.widthCircle??10
                 }),
-                image: new Circle({
-                    radius: 7,
-                    fill: new Fill({
-                        color: '#ffcc33'
-                    })
-                })
+
             }),
 
             'Point': new Style({
-                fill: new Fill({
-                    color: 'rgba(182,85,85,0.2)'
-                }),
-                stroke: new Stroke({
-                    color: '#03e80e',
-                    width: 3
-                }),
                 image: new Circle({
-                    radius: 12,
+                    radius: this.option.style?.radiusPoint??5,
                     fill: new Fill({
-                        color: '#a88007'
+                        color: this.option.style?.colorPoint??'#0324fb'
                     })
                 })
             }),
 
-        });
-        this.stylesSelect = new Style({
-            fill: new Fill({
-                color: this.hexToRgbAEx(this.option.style?.fillPolygonSelect ?? '#F8F9F4'),
-            }),
-            stroke: new Stroke({
-                color: option.style?.colorPolygonSelect ?? '#f80622',
-                width: option.style?.widthPolygonSelect ?? 3
-            }),
-            image: new Circle({
-                radius: 7,
-                fill: new Fill({
-                    color: '#4eff33'
-                })
-            })
-        });
+        };
     }
 
     styleFunction = (feature) => {
@@ -304,7 +297,7 @@ class StyleOsm {
 }
 
 var bsrMap = 'bsr-12';
-function parce(hash) {
+function parse(hash) {
     if (!hash) {
         return undefined;
     }
@@ -320,13 +313,17 @@ function parce(hash) {
 }
 function GetPosition(option, id) {
     var _a, _b, _c;
-    var zoom = (_a = option.zoom) !== null && _a !== void 0 ? _a : 15;
-    var center = (_b = option.center) !== null && _b !== void 0 ? _b : [0, 0]; // [1608429.01, 6461053.51];
+    var zoom = (_a = option.zoom) !== null && _a !== void 0 ? _a : 12;
+    var p = [352236.29, 5200847.21];
+    if (option.projection === "EPSG:4326") {
+        p = [0, 0];
+    }
+    var center = (_b = option.center) !== null && _b !== void 0 ? _b : p;
     var rotation = 0;
     if (option.useSynchronizationUrl) {
         if (window.location.hash !== '') {
             var hash = window.location.hash.replace('#map=', '');
-            var res = parce(hash);
+            var res = parse(hash);
             if (res) {
                 return res;
             }
@@ -334,7 +331,7 @@ function GetPosition(option, id) {
         else {
             var hash = getCookie((_c = bsrMap + id) !== null && _c !== void 0 ? _c : '');
             if (hash) {
-                var res = parce(hash.replace('#map=', ''));
+                var res = parse(hash.replace('#map=', ''));
                 if (res) {
                     return res;
                 }
@@ -345,7 +342,7 @@ function GetPosition(option, id) {
 }
 function SyncUrl(map, option, id) {
     var shouldUpdate = true;
-    var popState = function (event) {
+    var popState = function ( /*event: HashChangeEvent*/) {
         var str = window.location.hash.substring(5).split('/');
         if (str.length !== 4) {
             return;
@@ -400,21 +397,18 @@ function getCookie(name) {
     return matches ? decodeURIComponent(matches[1]) : undefined;
 }
 
-var EPSG;
-(function (EPSG) {
-    EPSG["EPSG_3857"] = "EPSG:3857";
-    EPSG["EPSG_4326"] = "EPSG:4326";
-})(EPSG || (EPSG = {}));
 var BsrMap = /** @class */ (function (_super) {
     __extends(BsrMap, _super);
     function BsrMap(props) {
         var _this = this;
         var _a;
         _this = _super.call(this, props) || this;
+        _this.isDispose = false;
+        _this.refDivMap = React.createRef();
         _this.option = (_a = _this.props.option) !== null && _a !== void 0 ? _a : {};
         _this.id = v4();
         _this.styleOsm = new StyleOsm(_this.option);
-        _this.source = new VectorSource({ wrapX: false });
+        _this.source = new VectorSource({ wrapX: false, url: _this.option.sourceUrl });
         _this.vector = new VectorLayer({
             //format: new GeoJSON(),
             source: _this.source,
@@ -443,10 +437,22 @@ var BsrMap = /** @class */ (function (_super) {
         _this.initMap();
         return _this;
     }
+    BsrMap.prototype.Dispose = function (callback) {
+        if (!this.isDispose) {
+            this.map.getAllLayers().forEach(function (layer) {
+                var _a;
+                (_a = layer.getSource()) === null || _a === void 0 ? void 0 : _a.dispose();
+                layer.dispose();
+            });
+            this.map.getView().dispose();
+            this.map.dispose();
+            this.isDispose = true;
+        }
+    };
     BsrMap.prototype.initMap = function () {
         var _this = this;
         setTimeout(function () {
-            var _a;
+            var _a, _b;
             var coordinate = GetPosition(_this.option, _this.props.id);
             _this.map = new Map({
                 interactions: defaults().extend([new Drag(_this, _this.option),]),
@@ -455,12 +461,13 @@ var BsrMap = /** @class */ (function (_super) {
                     }), _this.vector],
                 target: (_a = _this.props.id) !== null && _a !== void 0 ? _a : _this.id,
                 view: new View({
-                    //projection: 'EPSG:4326',
+                    projection: (_b = _this.option.projection) !== null && _b !== void 0 ? _b : 'EPSG:3857',
                     center: coordinate.center,
                     rotation: coordinate.rotation,
                     zoom: coordinate.zoom,
                 }),
             });
+            //this.map.addControl(new ZoomSlider());
             _this.syncUnmount = SyncUrl(_this.map, _this.option, _this.props.id);
             if (_this.option.removeDoubleClickZoom) {
                 // убрали из дефолта двойной клик
@@ -514,6 +521,9 @@ var BsrMap = /** @class */ (function (_super) {
             this.source.addFeatures(this.props.features);
         }
     };
+    BsrMap.prototype.GetDivMap = function () {
+        return this.refDivMap.current;
+    };
     BsrMap.prototype.GetCurrentEPSGProjection = function () {
         var _a;
         return (_a = this.map) === null || _a === void 0 ? void 0 : _a.getView().getProjection().getCode();
@@ -555,10 +565,21 @@ var BsrMap = /** @class */ (function (_super) {
             f.setStyle(_this.styleOsm.styleFunction);
         });
     };
-    BsrMap.prototype.SelectStyleFeature = function (feature) {
+    BsrMap.prototype.RefreshStyleSettings = function () {
+        this.styleOsm.refreshStyleSettings();
+    };
+    BsrMap.prototype.SelectFeature = function (feature) {
         var _a;
         this.RefreshStyleFeatures();
         feature.setStyle((_a = this.styleOsm) === null || _a === void 0 ? void 0 : _a.selectStyle());
+    };
+    BsrMap.prototype.SelectFeatures = function (features) {
+        var _this = this;
+        this.RefreshStyleFeatures();
+        features.forEach(function (f) {
+            var _a;
+            f.setStyle((_a = _this.styleOsm) === null || _a === void 0 ? void 0 : _a.selectStyle());
+        });
     };
     BsrMap.prototype.GoTo = function (center, zoom, rotation) {
         var view = this.map.getView();
@@ -572,7 +593,11 @@ var BsrMap = /** @class */ (function (_super) {
     };
     BsrMap.prototype.GetMapCoordinate = function () {
         var view = this.map.getView();
-        return [view.getCenter(), view.getZoom(), view.getRotation()];
+        return {
+            center: view.getCenter(),
+            zoom: view.getZoom(),
+            rotation: view.getRotation()
+        };
     };
     BsrMap.prototype.GetBound = function (isJson) {
         var extent = this.map.getView().calculateExtent(this.map.getSize());
@@ -586,22 +611,6 @@ var BsrMap = /** @class */ (function (_super) {
             return JSON.stringify(bound);
         }
         return bound;
-    };
-    BsrMap.prototype.CreateFeature = function (geometry, coordinate) {
-        switch (geometry) {
-            case 'Point':
-                return new Feature({
-                    geometry: new Point(coordinate),
-                });
-            case 'LineString':
-                return new Feature({
-                    geometry: new LineString(coordinate),
-                });
-            case 'Polygon':
-                return new Feature({
-                    geometry: new Polygon(coordinate),
-                });
-        }
     };
     BsrMap.prototype.GetFeatures = function (geometry) {
         switch (geometry) {
@@ -637,10 +646,10 @@ var BsrMap = /** @class */ (function (_super) {
     BsrMap.prototype.AddFeatures = function (f) {
         this.source.addFeatures(f);
     };
-    BsrMap.prototype.RemoveFeature = function (f) {
+    BsrMap.prototype.DeleteFeature = function (f) {
         this.source.removeFeature(f);
     };
-    BsrMap.prototype.RemoveAllFeatures = function (callback) {
+    BsrMap.prototype.DeleteAllFeatures = function (callback) {
         this.source.clear();
         this.map.removeInteraction(this.draw);
         if (this.rejectPromise) {
@@ -670,17 +679,18 @@ var BsrMap = /** @class */ (function (_super) {
             return [];
         }
     };
-    BsrMap.prototype.TransForm = function (coordinate, from, to) {
-        return transform(coordinate, from, to);
-    };
     /**
-     * возврат точки при создании маршрута или полигона
+     * remove last point when creating a feature
      */
     BsrMap.prototype.Undo = function () {
         var _a;
         (_a = this.draw) === null || _a === void 0 ? void 0 : _a.removeLastPoint();
     };
-    BsrMap.prototype.BuildFeature = function (geometry) {
+    /**
+     * Build, create feature
+     * @param geometry 'Polygon' | 'LineString' | 'Point' | 'Circle'
+     */
+    BsrMap.prototype.CreateFeature = function (geometry) {
         var _this = this;
         this.CancelCreate();
         return new Promise(function (resolve, reject) {
@@ -699,21 +709,22 @@ var BsrMap = /** @class */ (function (_super) {
                 _this.rejectPromise = undefined;
                 var feature = e.feature;
                 _this.map.removeInteraction(_this.draw);
-                _this.editOnlyRouteOrPolygon();
+                // this.editOnlyRouteOrPolygon()
                 resolve({
                     bsrMap: _this,
                     feature: feature,
                     geometry: geometry,
                     json: _this.FeatureToJson(feature)
                 });
-                // setTimeout(() => {
-                //     this.selectAltClick?.getFeatures().clear()
-                //     this.selectAltClick.getFeatures().push(feature)
-                // }, 500)
             });
             _this.map.addInteraction(_this.draw);
         });
     };
+    /**
+     * start edit feature
+     * @param feature Feature<Geometry>
+     * @param callback callback function
+     */
     BsrMap.prototype.StartEditFeature = function (feature, callback) {
         var d = this.selectAltClick.getFeatures();
         if (d.getLength() > 0) {
@@ -721,16 +732,25 @@ var BsrMap = /** @class */ (function (_super) {
         }
         else {
             this.selectAltClick.getFeatures().push(feature);
+            this.editOnlyRouteOrPolygon();
         }
         if (callback)
             callback();
     };
+    /**
+     * end of editing feature
+     */
     BsrMap.prototype.FinishEditFeature = function (callback) {
         this.selectAltClick.getFeatures().clear();
         if (callback) {
             callback();
         }
     };
+    /**
+     * Assigning default styles
+     * @param f target feature
+     * @constructor
+     */
     BsrMap.prototype.FeatureToJson = function (f) {
         var geoJsonGeom = new GeoJSON();
         var featureClone = f.clone();
@@ -752,7 +772,7 @@ var BsrMap = /** @class */ (function (_super) {
         this.map.addInteraction(this.selectAltClick);
     };
     /**
-     * Перерисовка стилей
+     * Redrawing features styles
      */
     BsrMap.prototype.RefreshStyleFeature = function (feature) {
         feature.setStyle(this.styleOsm.styleFunction(feature));
@@ -761,17 +781,43 @@ var BsrMap = /** @class */ (function (_super) {
         var _a;
         (_a = this.syncUnmount) === null || _a === void 0 ? void 0 : _a.apply(undefined);
     };
-    BsrMap.prototype.componentDidMount = function () {
-        // const format = new GeoJSON();
-        // const features = format.readFeatures(json);
-        // source.addFeatures(features)
-    };
     BsrMap.prototype.render = function () {
         var _a, _b;
-        console.log(this.props.id);
-        return (React.createElement("div", { style: (_a = this.props.style) !== null && _a !== void 0 ? _a : { width: "100%", height: 400 }, id: (_b = this.props.id) !== null && _b !== void 0 ? _b : this.id }));
+        return (React.createElement("div", { ref: this.refDivMap, style: (_a = this.props.style) !== null && _a !== void 0 ? _a : { width: "100%", height: 400 }, id: (_b = this.props.id) !== null && _b !== void 0 ? _b : this.id }));
     };
     return BsrMap;
 }(React.Component));
 
-export { BsrMap };
+var ContextMenuMap = /** @class */ (function (_super) {
+    __extends(ContextMenuMap, _super);
+    function ContextMenuMap(props) {
+        return _super.call(this, props) || this;
+    }
+    ContextMenuMap.prototype.render = function () {
+        var _this = this;
+        return (React.createElement("div", { onClick: function () { _this.props.actionClose(); } }, this.props.element));
+    };
+    return ContextMenuMap;
+}(React.Component));
+function ProxyMenuDialog(evt, element) {
+    var div = document.createElement("div");
+    div.setAttribute("id", "12-23");
+    div.className = "bsr-map-context-menu";
+    div.style.top = evt.pageY + "px";
+    div.style.left = evt.pageX + "px";
+    div.onmousedown = function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+    };
+    var innerRoot = createRoot(div);
+    function close() {
+        innerRoot.render(null);
+        document.body.removeChild(div);
+        document.removeEventListener("mousedown", close);
+    }
+    document.addEventListener("mousedown", close);
+    document.body.appendChild(div);
+    innerRoot.render(React.createElement(ContextMenuMap, { element: element, actionClose: close }));
+}
+
+export { BsrMap, ProxyMenuDialog };

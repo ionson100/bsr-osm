@@ -7,7 +7,7 @@ export type position={
     center:number[]
     rotation :number
 }
- function parce(hash:string|undefined):position|undefined{
+ function parse(hash:string|undefined):position|undefined{
     if(!hash){
         return undefined;
     }
@@ -24,21 +24,25 @@ export type position={
  }
 
 export function GetPosition(option: OptionOSM,id?:string):position {
-    let zoom: number =option.zoom??15;
-    let center: number[] = option.center ??[0, 0];// [1608429.01, 6461053.51];
+    let zoom: number =option.zoom??12;
+    let p=[352236.29,5200847.21]
+    if(option.projection==="EPSG:4326"){
+        p=[0,0]
+    }
+    let center: number[] = option.center ??p;
     let rotation = 0;
 
     if(option.useSynchronizationUrl){
         if (window.location.hash !== '') {
             const hash = window.location.hash.replace('#map=', '');
-            const res=parce(hash)
+            const res=parse(hash)
             if(res){
                 return  res;
             }
         } else {
             let hash = getCookie(bsrMap+id??'')
             if(hash){
-                const res=parce(hash.replace('#map=', ''))
+                const res=parse(hash.replace('#map=', ''))
                 if(res){
                     return  res;
                 }
@@ -52,7 +56,7 @@ export function GetPosition(option: OptionOSM,id?:string):position {
 export function SyncUrl(map: Map, option: OptionOSM,id?:string) {
     let shouldUpdate = true;
 
-    const popState = (event: HashChangeEvent) => {
+    const popState = (/*event: HashChangeEvent*/) => {
         const str = window.location.hash.substring(5).split('/')
         if (str.length !== 4) {
             return
@@ -111,9 +115,9 @@ function setCookie(name: string, value: string) {
 
 }
 
-function deleteCookie(name: string) {
-    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT`
-}
+// function deleteCookie(name: string) {
+//     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT`
+// }
 
 
 export function getCookie(name: string) {
