@@ -96,6 +96,7 @@ export function SyncUrl(map: Map, option: OptionOSM,id?:string) {
         }
         let hashNew=  new URLSearchParams(window.location.hash.substring(1))
         let str='/#'
+        let appndMap=false
         hashNew.forEach((value,name) => {
             console.log(name+" "+value)
             if(name!=='map'){
@@ -107,6 +108,7 @@ export function SyncUrl(map: Map, option: OptionOSM,id?:string) {
                 }
 
             }else{
+                appndMap=true
                 if(str==='/#'){
                     str=str+'map='+hashMap
                 }else{
@@ -114,10 +116,15 @@ export function SyncUrl(map: Map, option: OptionOSM,id?:string) {
                 }
             }
         })
-
-        if(str==='/#'){
-            str=str+"map="+hashMap
+        if(!appndMap){
+            if(str==='/#'){
+                str=str+"map="+hashMap
+            }else{
+                str=str+'&map='+hashMap
+            }
         }
+
+
 
 
 
