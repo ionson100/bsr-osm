@@ -33,16 +33,21 @@ export function GetPosition(option: OptionOSM,id?:string):position {
     let rotation = 0;
 
     if(option.useSynchronizationUrl){
-        if (window.location.hash !== '') {
-            const hash = window.location.hash.replace('#map=', '');
-            const res=parse(hash)
+
+        let myUrl =  new URLSearchParams(window.location.hash.substring(1))
+        const tag = myUrl.get("map");
+
+
+        if (tag) {
+
+            const res=parse(tag)
             if(res){
                 return  res;
             }
         } else {
-            let hash = getCookie(bsrMap+id??'')
-            if(hash){
-                const res=parse(hash.replace('#map=', ''))
+            let hashMap = getCookie(bsrMap+id??'')
+            if(hashMap){
+                const res=parse(hashMap)
                 if(res){
                     return  res;
                 }
@@ -57,15 +62,12 @@ export function SyncUrl(map: Map, option: OptionOSM,id?:string) {
     let shouldUpdate = true;
 
     const popState = (/*event: HashChangeEvent*/) => {
-        const str = window.location.hash.substring(5).split('/')
-        if (str.length !== 4) {
-            return
+        let myUrl =  new URLSearchParams(window.location.hash.substring(1))
+        let hashMap = myUrl.get("map");
+        if(hashMap){
+           parse(hashMap)
         }
 
-        map!.getView().setCenter([parseInt(str[1]), parseInt(str[2])]);
-        map!.getView().setZoom(parseInt(str[0]));
-        map!.getView().setRotation(parseInt(str[3]));
-        shouldUpdate = false;
     }
     const updatePermalink = () => {
         if (!shouldUpdate) {
@@ -75,8 +77,8 @@ export function SyncUrl(map: Map, option: OptionOSM,id?:string) {
         }
         const view = map.getView();
         const center = view.getCenter();
-        const hash =
-            '#map=' +
+        const hashMap =
+            '' +
             view.getZoom()!.toFixed(2) +
             '/' +
             center![0].toFixed(2) +
@@ -90,10 +92,37 @@ export function SyncUrl(map: Map, option: OptionOSM,id?:string) {
             rotation: view.getRotation(),
         };
         if(option.useCookiesPosition){
-            setCookie(bsrMap+id??'', hash)
+            setCookie(bsrMap+id??'', hashMap)
+        }
+        let hashNew=  new URLSearchParams(window.location.hash.substring(1))
+        let str='/#'
+        hashNew.forEach((value,name) => {
+            console.log(name+" "+value)
+            if(name!=='map'){
+
+                if(str==='/#'){
+                    str=str+name+'='+value
+                }else{
+                    str=str+"&"+name+'='+value
+                }
+
+            }else{
+                if(str==='/#'){
+                    str=str+'map='+hashMap
+                }else{
+                    str=str+'&map='+hashMap
+                }
+            }
+        })
+
+        if(str==='/#'){
+            str=str+"map="+hashMap
         }
 
-        window.history.pushState(state, 'map', hash);
+
+
+
+        window.history.pushState(state, 'map', str);
     };
     if (option.useSynchronizationUrl) {
 

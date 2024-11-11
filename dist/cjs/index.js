@@ -342,17 +342,18 @@ function GetPosition(option, id) {
     var center = (_b = option.center) !== null && _b !== void 0 ? _b : p;
     var rotation = 0;
     if (option.useSynchronizationUrl) {
-        if (window.location.hash !== '') {
-            var hash = window.location.hash.replace('#map=', '');
-            var res = parse(hash);
+        var myUrl = new URLSearchParams(window.location.hash.substring(1));
+        var tag = myUrl.get("map");
+        if (tag) {
+            var res = parse(tag);
             if (res) {
                 return res;
             }
         }
         else {
-            var hash = getCookie((_c = bsrMap + id) !== null && _c !== void 0 ? _c : '');
-            if (hash) {
-                var res = parse(hash.replace('#map=', ''));
+            var hashMap = getCookie((_c = bsrMap + id) !== null && _c !== void 0 ? _c : '');
+            if (hashMap) {
+                var res = parse(hashMap);
                 if (res) {
                     return res;
                 }
@@ -362,27 +363,18 @@ function GetPosition(option, id) {
     return { zoom: zoom, center: center, rotation: rotation };
 }
 function SyncUrl(map, option, id) {
-    var shouldUpdate = true;
     var popState = function ( /*event: HashChangeEvent*/) {
-        var str = window.location.hash.substring(5).split('/');
-        if (str.length !== 4) {
-            return;
+        var myUrl = new URLSearchParams(window.location.hash.substring(1));
+        var hashMap = myUrl.get("map");
+        if (hashMap) {
+            parse(hashMap);
         }
-        map.getView().setCenter([parseInt(str[1]), parseInt(str[2])]);
-        map.getView().setZoom(parseInt(str[0]));
-        map.getView().setRotation(parseInt(str[3]));
-        shouldUpdate = false;
     };
     var updatePermalink = function () {
         var _a;
-        if (!shouldUpdate) {
-            // do not update the URL when the view was changed in the 'popstate' handler
-            shouldUpdate = true;
-            return;
-        }
         var view = map.getView();
         var center = view.getCenter();
-        var hash = '#map=' +
+        var hashMap = '' +
             view.getZoom().toFixed(2) +
             '/' +
             center[0].toFixed(2) +
@@ -396,9 +388,33 @@ function SyncUrl(map, option, id) {
             rotation: view.getRotation(),
         };
         if (option.useCookiesPosition) {
-            setCookie((_a = bsrMap + id) !== null && _a !== void 0 ? _a : '', hash);
+            setCookie((_a = bsrMap + id) !== null && _a !== void 0 ? _a : '', hashMap);
         }
-        window.history.pushState(state, 'map', hash);
+        var hashNew = new URLSearchParams(window.location.hash.substring(1));
+        var str = '/#';
+        hashNew.forEach(function (value, name) {
+            console.log(name + " " + value);
+            if (name !== 'map') {
+                if (str === '/#') {
+                    str = str + name + '=' + value;
+                }
+                else {
+                    str = str + "&" + name + '=' + value;
+                }
+            }
+            else {
+                if (str === '/#') {
+                    str = str + 'map=' + hashMap;
+                }
+                else {
+                    str = str + '&map=' + hashMap;
+                }
+            }
+        });
+        if (str === '/#') {
+            str = str + "map=" + hashMap;
+        }
+        window.history.pushState(state, 'map', str);
     };
     if (option.useSynchronizationUrl) {
         map.on('moveend', updatePermalink);
@@ -413,6 +429,9 @@ function SyncUrl(map, option, id) {
 function setCookie(name, value) {
     document.cookie = "".concat(name, "=").concat(value, "; max-age=25920000");
 }
+// function deleteCookie(name: string) {
+//     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT`
+// }
 function getCookie(name) {
     var matches = document.cookie.match(new RegExp("(?:^|; )".concat(name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1'), "=([^;]*)")));
     return matches ? decodeURIComponent(matches[1]) : undefined;
@@ -468,6 +487,8 @@ var BsrMap = /** @class */ (function (_super) {
             this.map.getView().dispose();
             this.map.dispose();
             this.isDispose = true;
+            if (callback)
+                callback();
         }
     };
     BsrMap.prototype.initMap = function () {
