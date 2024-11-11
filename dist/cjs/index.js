@@ -392,6 +392,7 @@ function SyncUrl(map, option, id) {
         }
         var hashNew = new URLSearchParams(window.location.hash.substring(1));
         var str = '/#';
+        var appndMap = false;
         hashNew.forEach(function (value, name) {
             console.log(name + " " + value);
             if (name !== 'map') {
@@ -403,6 +404,7 @@ function SyncUrl(map, option, id) {
                 }
             }
             else {
+                appndMap = true;
                 if (str === '/#') {
                     str = str + 'map=' + hashMap;
                 }
@@ -411,8 +413,13 @@ function SyncUrl(map, option, id) {
                 }
             }
         });
-        if (str === '/#') {
-            str = str + "map=" + hashMap;
+        if (!appndMap) {
+            if (str === '/#') {
+                str = str + "map=" + hashMap;
+            }
+            else {
+                str = str + '&map=' + hashMap;
+            }
         }
         window.history.pushState(state, 'map', str);
     };
