@@ -7,6 +7,7 @@ export type OptionOSM = {
      * [latitude,longitude] ([x,y])
      */
     center?: Array<number>;
+    rotation?: number;
     removeDoubleClickZoom?: boolean;
     onClick?: (map: BsrMap, feature: Feature | undefined, evt: MapBrowserEvent<any>) => void;
     onShowContextMenu?: (map: BsrMap, feature: Feature<Geometry> | undefined, e: MouseEvent) => void;
@@ -17,7 +18,6 @@ export type OptionOSM = {
     useDrawBox?: boolean;
     style?: StyleSettings;
     useSynchronizationUrl?: boolean;
-    useCookiesPosition?: boolean;
     sourceUrl?: string;
     projection?: 'EPSG:4326' | 'EPSG:3857' | string | undefined;
 };

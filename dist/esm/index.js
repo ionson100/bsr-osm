@@ -296,7 +296,10 @@ class StyleOsm {
     }
 }
 
-var bsrMap = 'bsr-12';
+window.onpopstate = function (event) {
+    console.log("location: " + document.location + ", state: " + JSON.stringify(event.state));
+};
+var bsrMap$1 = 'bsr-12';
 function parse(hash) {
     if (!hash) {
         return undefined;
@@ -312,14 +315,14 @@ function parse(hash) {
     return undefined;
 }
 function GetPosition(option, id) {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     var zoom = (_a = option.zoom) !== null && _a !== void 0 ? _a : 12;
     var p = [352236.29, 5200847.21];
     if (option.projection === "EPSG:4326") {
         p = [0, 0];
     }
     var center = (_b = option.center) !== null && _b !== void 0 ? _b : p;
-    var rotation = 0;
+    var rotation = (_c = option.rotation) !== null && _c !== void 0 ? _c : 0;
     if (option.useSynchronizationUrl) {
         var myUrl = new URLSearchParams(window.location.hash.substring(1));
         var tag = myUrl.get("map");
@@ -330,30 +333,95 @@ function GetPosition(option, id) {
             }
         }
         else {
-            var hashMap = getCookie((_c = bsrMap + id) !== null && _c !== void 0 ? _c : '');
-            if (hashMap) {
-                var res = parse(hashMap);
-                if (res) {
-                    return res;
+            if (option.useSynchronizationUrl) {
+                var hashMap = getCookie((_d = bsrMap$1 + id) !== null && _d !== void 0 ? _d : '');
+                if (hashMap) {
+                    var res = parse(hashMap);
+                    if (res) {
+                        return res;
+                    }
                 }
             }
         }
     }
     return { zoom: zoom, center: center, rotation: rotation };
 }
+function setCookie(name, value) {
+    document.cookie = "".concat(name, "=").concat(value, "; max-age=25920000");
+}
+// function deleteCookie(name: string) {
+//     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT`
+// }
+function getCookie(name) {
+    var matches = document.cookie.match(new RegExp("(?:^|; )".concat(name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1'), "=([^;]*)")));
+    return matches ? decodeURIComponent(matches[1]) : undefined;
+}
+
+var bsrMap = 'bsr-12';
+var shouldUpdate = true;
+function getHashCore(hashMap) {
+    var hashNew = new URLSearchParams(window.location.hash.substring(1));
+    var str = '/#';
+    var iaAppendMap = false;
+    hashNew.forEach(function (value, name) {
+        if (name !== 'map') {
+            if (str === '/#') {
+                str = str + name + '=' + value;
+            }
+            else {
+                str = str + "&" + name + '=' + value;
+            }
+        }
+        else {
+            iaAppendMap = true;
+            if (str === '/#') {
+                str = str + 'map=' + hashMap;
+            }
+            else {
+                str = str + '&map=' + hashMap;
+            }
+        }
+    });
+    if (!iaAppendMap) {
+        if (str === '/#') {
+            str = str + "map=" + hashMap;
+        }
+        else {
+            str = str + '&map=' + hashMap;
+        }
+    }
+    return str;
+}
 function SyncUrl(map, option, id) {
     var popState = function ( /*event: HashChangeEvent*/) {
+        shouldUpdate = false;
         var myUrl = new URLSearchParams(window.location.hash.substring(1));
         var hashMap = myUrl.get("map");
         if (hashMap) {
-            parse(hashMap);
+            var res = parse(hashMap);
+            if (res) {
+                var view = map.getView();
+                view.setCenter(res.center);
+                view.setZoom(res.zoom);
+                view.setRotation(res.rotation);
+                var state = {
+                    zoom: view.getZoom(),
+                    center: view.getCenter(),
+                    rotation: view.getRotation(),
+                };
+                window.history.replaceState(state, 'map', window.location.hash);
+            }
         }
     };
     var updatePermalink = function () {
         var _a;
+        if (!shouldUpdate) {
+            shouldUpdate = true;
+            return;
+        }
         var view = map.getView();
         var center = view.getCenter();
-        var hashMap = '' +
+        var hash = '' +
             view.getZoom().toFixed(2) +
             '/' +
             center[0].toFixed(2) +
@@ -366,61 +434,27 @@ function SyncUrl(map, option, id) {
             center: view.getCenter(),
             rotation: view.getRotation(),
         };
-        if (option.useCookiesPosition) {
-            setCookie((_a = bsrMap + id) !== null && _a !== void 0 ? _a : '', hashMap);
-        }
-        var hashNew = new URLSearchParams(window.location.hash.substring(1));
-        var str = '/#';
-        var appndMap = false;
-        hashNew.forEach(function (value, name) {
-            console.log(name + " " + value);
-            if (name !== 'map') {
-                if (str === '/#') {
-                    str = str + name + '=' + value;
-                }
-                else {
-                    str = str + "&" + name + '=' + value;
-                }
-            }
-            else {
-                appndMap = true;
-                if (str === '/#') {
-                    str = str + 'map=' + hashMap;
-                }
-                else {
-                    str = str + '&map=' + hashMap;
-                }
-            }
-        });
-        if (!appndMap) {
-            if (str === '/#') {
-                str = str + "map=" + hashMap;
-            }
-            else {
-                str = str + '&map=' + hashMap;
-            }
-        }
-        window.history.pushState(state, 'map', str);
+        setCookie((_a = bsrMap + id) !== null && _a !== void 0 ? _a : '', hash);
+        window.history.pushState(state, 'map', getHashCore(hash));
     };
-    if (option.useSynchronizationUrl) {
-        map.on('moveend', updatePermalink);
-        window.addEventListener("hashchange", popState);
-        return function () {
-            window.removeEventListener("hashchange", popState);
-        };
+    map.on('moveend', updatePermalink);
+    function pp23(event) {
+        if (event.state === null) {
+            return;
+        }
+        map.getView().setCenter(event.state.center);
+        map.getView().setZoom(event.state.zoom);
+        map.getView().setRotation(event.state.rotation);
+        shouldUpdate = false;
     }
+    window.addEventListener('popstate', pp23);
+    map.on('moveend', updatePermalink);
+    window.addEventListener("hashchange", popState);
     return function () {
+        window.removeEventListener('popstate', pp23);
+        window.removeEventListener("hashchange", popState);
+        console.log("removeEventListener");
     };
-}
-function setCookie(name, value) {
-    document.cookie = "".concat(name, "=").concat(value, "; max-age=25920000");
-}
-// function deleteCookie(name: string) {
-//     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT`
-// }
-function getCookie(name) {
-    var matches = document.cookie.match(new RegExp("(?:^|; )".concat(name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1'), "=([^;]*)")));
-    return matches ? decodeURIComponent(matches[1]) : undefined;
 }
 
 var BsrMap = /** @class */ (function (_super) {
@@ -473,6 +507,10 @@ var BsrMap = /** @class */ (function (_super) {
             this.map.getView().dispose();
             this.map.dispose();
             this.isDispose = true;
+            if (this.syncUnmount) {
+                this.syncUnmount();
+                this.syncUnmount = function () { };
+            }
             if (callback)
                 callback();
         }
@@ -496,7 +534,9 @@ var BsrMap = /** @class */ (function (_super) {
                 }),
             });
             //this.map.addControl(new ZoomSlider());
-            _this.syncUnmount = SyncUrl(_this.map, _this.option, _this.props.id);
+            if (_this.option.useSynchronizationUrl) {
+                _this.syncUnmount = SyncUrl(_this.map, _this.option, _this.props.id);
+            }
             if (_this.option.removeDoubleClickZoom) {
                 // убрали из дефолта двойной клик
                 _this.map.getInteractions().getArray().forEach(function (interaction) {
@@ -505,6 +545,7 @@ var BsrMap = /** @class */ (function (_super) {
                     }
                 });
             }
+            //const link = new Link();
             if (_this.option.onClick) {
                 _this.map.on("click", function (evt) {
                     var feature = _this.map.forEachFeatureAtPixel(evt.pixel, function (feature) {
@@ -806,8 +847,9 @@ var BsrMap = /** @class */ (function (_super) {
         feature.setStyle(this.styleOsm.styleFunction(feature));
     };
     BsrMap.prototype.componentWillUnmount = function () {
-        var _a;
-        (_a = this.syncUnmount) === null || _a === void 0 ? void 0 : _a.apply(undefined);
+        if (this.syncUnmount) {
+            this.syncUnmount();
+        }
     };
     BsrMap.prototype.render = function () {
         var _a, _b;

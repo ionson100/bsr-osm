@@ -17,8 +17,9 @@ import {Geometry,  SimpleGeometry} from "ol/geom";
 import {OptionOSM} from "./option";
 import VectorLayer from "ol/layer/Vector";
 import {StyleOsm} from "./styleOsm";
-import {GetPosition, SyncUrl} from "./sync";
+import {GetPosition} from "./startPositions";
 import * as extent from "ol/extent";
+import {SyncUrl} from "./sync";
 
 
 
@@ -92,10 +93,14 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
             this.map!.getView().dispose();
             this.map!.dispose();
             this.isDispose=true;
+            if(this.syncUnmount){
+                this.syncUnmount()
+                this.syncUnmount=()=>{}
+            }
             if(callback) callback()
-
         }
     }
+
 
 
     private initMap() {
@@ -122,7 +127,10 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
 
             //this.map.addControl(new ZoomSlider());
 
-            this.syncUnmount = SyncUrl(this.map, this.option,this.props.id)
+            if(this.option.useSynchronizationUrl){
+                this.syncUnmount = SyncUrl(this.map, this.option,this.props.id)
+            }
+
 
 
             if (this.option.removeDoubleClickZoom) {
@@ -134,6 +142,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                     }
                 });
             }
+            //const link = new Link();
 
             if (this.option.onClick) {
                 this.map.on("click", (evt: MapBrowserEvent<any>) => {
@@ -475,7 +484,9 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
 
 
     componentWillUnmount() {
-        this.syncUnmount?.apply(undefined)
+        if(this.syncUnmount){
+            this.syncUnmount()
+        }
     }
 
     render() {
