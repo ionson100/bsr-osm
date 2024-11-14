@@ -895,6 +895,10 @@ var BsrMap = /** @class */ (function (_super) {
         var featureClone = f.clone();
         return geoJsonGeom.writeGeometry(featureClone.getGeometry());
     };
+    BsrMap.prototype.FeaturesToJson = function (features) {
+        var geoJsonGeom = new GeoJSON();
+        return geoJsonGeom.writeFeatures(features);
+    };
     BsrMap.prototype.editOnlyRouteOrPolygon = function () {
         var _this = this;
         this.modify1 = new Modify({

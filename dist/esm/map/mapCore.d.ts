@@ -107,6 +107,7 @@ export declare class BsrMap extends React.Component<PropsBsrMap, any> {
      * @constructor
      */
     FeatureToJson(f: Feature): string;
+    FeaturesToJson(features: Feature<Geometry>[]): string;
     private editOnlyRouteOrPolygon;
     /**
      * Redrawing features styles

@@ -521,6 +521,10 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         const featureClone: Feature<Geometry> = f.clone();
         return geoJsonGeom.writeGeometry(featureClone.getGeometry()!);
     }
+    public FeaturesToJson(features:Feature<Geometry>[]){
+        const geoJsonGeom = new GeoJSON();
+        return geoJsonGeom.writeFeatures(features)
+    }
 
     private editOnlyRouteOrPolygon() {
         this.modify1 = new Modify({
