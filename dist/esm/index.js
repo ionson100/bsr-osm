@@ -610,7 +610,7 @@ var BsrMap = /** @class */ (function (_super) {
     BsrMap.prototype.CancelCreate = function (callback) {
         this.map.removeInteraction(this.draw);
         if (this.resolvePromise) {
-            this.resolvePromise('cancel create user');
+            this.resolvePromise();
             this.isCreate = false;
         }
         if (callback)
@@ -733,7 +733,7 @@ var BsrMap = /** @class */ (function (_super) {
         this.source.clear();
         this.map.removeInteraction(this.draw);
         if (this.resolvePromise) {
-            this.resolvePromise('cancel create user');
+            this.resolvePromise();
         }
         if (callback)
             callback();

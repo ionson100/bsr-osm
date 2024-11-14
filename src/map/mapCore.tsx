@@ -45,7 +45,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
     private isCreate=false;
     private isDispose=false;
     private refDivMap=React.createRef<HTMLDivElement>()
-    private resolvePromise?: (msg: string) => void
+    private resolvePromise?: () => void
     private option = this.props.option ?? {}
     private id = uuid()
     private styleOsm: StyleOsm = new StyleOsm(this.option)
@@ -221,7 +221,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
     public CancelCreate(callback?: () => void) {
         this.map!.removeInteraction(this.draw!);
         if (this.resolvePromise) {
-            this.resolvePromise('cancel create user')
+            this.resolvePromise()
             this.isCreate=false;
         }
         if (callback) callback()
@@ -354,7 +354,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         this.source.clear()
         this.map!.removeInteraction(this.draw!);
         if (this.resolvePromise) {
-            this.resolvePromise('cancel create user')
+            this.resolvePromise()
         }
         if (callback) callback()
 
