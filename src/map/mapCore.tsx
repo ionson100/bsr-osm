@@ -19,8 +19,9 @@ import VectorLayer from "ol/layer/Vector";
 import {StyleOsm} from "./styleOsm";
 import {GetPosition} from "./startPositions";
 import * as extent from "ol/extent";
-import {SyncUrl} from "./sync";
+//import {SyncUrl} from "./sync";
 import {MapEvent} from "./mapEvent";
+import {SyncUrl2} from "./syncNew";
 
 
 
@@ -28,7 +29,7 @@ import {MapEvent} from "./mapEvent";
 
 export type PropsBsrMap = {
     option?: OptionOSM|undefined
-    featureCollectionAsJson?: string|undefined
+    featuresAsJson?: string|undefined
     features?: Feature<Geometry>[]|undefined
     id?: string|undefined
     style?: React.CSSProperties | undefined,
@@ -136,7 +137,8 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
             //this.map.addControl(new ZoomSlider());
 
             if(this.option.useSynchronizationUrl){
-                this.syncUnmount = SyncUrl(this.map, this.option,this.props.id)
+               // this.syncUnmount = SyncUrl(this.map, this.option,this.props.id)
+                this.syncUnmount=new SyncUrl2(this.map, this.option,this.props.id).Dispose;
             }
 
 
@@ -200,8 +202,8 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
 
         })
 
-        if (this.props.featureCollectionAsJson) {
-            this.DrawFeatureCollection(this.props.featureCollectionAsJson);
+        if (this.props.featuresAsJson) {
+            this._addFeatureFromJson(this.props.featuresAsJson);
         }
         if (this.props.features) {
 
@@ -233,7 +235,8 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         this.map?.getView().setRotation(rotation)
     }
 
-    public DrawFeatureCollection(json: string, callback?: () => void) {
+
+     _addFeatureFromJson(json: string, callback?: () => void) {
         const format = new GeoJSON();
         const features = format.readFeatures(json);
         this.source.addFeatures(features)
@@ -345,6 +348,14 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
 
     public AddFeatures(f: Feature[]) {
         this.source.addFeatures(f)
+    }
+    public AddFeature(data:Feature|string){
+        if(typeof data ==="string"){
+            this._addFeatureFromJson(data)
+        }else{
+            this.AddFeatures([data])
+        }
+
     }
 
     public DeleteFeature(f: Feature) {

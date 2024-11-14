@@ -1,9 +1,7 @@
 import {OptionOSM} from "./option";
 
 
-window.onpopstate = function(event) {
-    console.log("location: " + document.location + ", state: " + JSON.stringify(event.state));
-};
+
 const bsrMap = 'bsr-12'
 export type position={
     zoom :number

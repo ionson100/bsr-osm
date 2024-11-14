@@ -8,7 +8,7 @@ import { OptionOSM } from "./option";
 import VectorLayer from "ol/layer/Vector";
 export type PropsBsrMap = {
     option?: OptionOSM | undefined;
-    featureCollectionAsJson?: string | undefined;
+    featuresAsJson?: string | undefined;
     features?: Feature<Geometry>[] | undefined;
     id?: string | undefined;
     style?: React.CSSProperties | undefined;
@@ -40,7 +40,7 @@ export declare class BsrMap extends React.Component<PropsBsrMap, any> {
     GetCurrentEPSGProjection(): string | undefined;
     CancelCreate(callback?: () => void): void;
     Rotation(rotation: number): void;
-    DrawFeatureCollection(json: string, callback?: () => void): void;
+    _addFeatureFromJson(json: string, callback?: () => void): void;
     GetVectorLayer(): VectorLayer;
     GetVectorSource(): VectorSource;
     GetMap(): Map;
@@ -66,6 +66,7 @@ export declare class BsrMap extends React.Component<PropsBsrMap, any> {
     };
     GetFeatures(geometry: 'Point' | 'LineString' | 'Polygon' | 'Circle' | undefined): Feature<Geometry>[];
     AddFeatures(f: Feature[]): void;
+    AddFeature(data: Feature | string): void;
     DeleteFeature(f: Feature): void;
     DeleteAllFeatures(callback?: () => void): void;
     GetCenterFeature(feature: Feature): Array<number>;

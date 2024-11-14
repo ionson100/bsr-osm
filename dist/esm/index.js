@@ -294,9 +294,6 @@ class StyleOsm {
     }
 }
 
-window.onpopstate = function (event) {
-    console.log("location: " + document.location + ", state: " + JSON.stringify(event.state));
-};
 var bsrMap$1 = 'bsr-12';
 function parse(hash) {
     if (!hash) {
@@ -355,110 +352,116 @@ function getCookie(name) {
     return matches ? decodeURIComponent(matches[1]) : undefined;
 }
 
-var bsrMap = 'bsr-12';
-var shouldUpdate = true;
-function getHashCore(hashMap) {
-    var hashNew = new URLSearchParams(window.location.hash.substring(1));
-    var str = '/#';
-    var iaAppendMap = false;
-    hashNew.forEach(function (value, name) {
-        if (name !== 'map') {
-            if (str === '/#') {
-                str = str + name + '=' + value;
-            }
-            else {
-                str = str + "&" + name + '=' + value;
-            }
-        }
-        else {
-            iaAppendMap = true;
-            if (str === '/#') {
-                str = str + 'map=' + hashMap;
-            }
-            else {
-                str = str + '&map=' + hashMap;
-            }
-        }
-    });
-    if (!iaAppendMap) {
-        if (str === '/#') {
-            str = str + "map=" + hashMap;
-        }
-        else {
-            str = str + '&map=' + hashMap;
-        }
-    }
-    return str;
-}
-function SyncUrl(map, option, id) {
-    var popState = function ( /*event: HashChangeEvent*/) {
-        shouldUpdate = false;
-        var myUrl = new URLSearchParams(window.location.hash.substring(1));
-        var hashMap = myUrl.get("map");
-        if (hashMap) {
-            var res = parse(hashMap);
-            if (res) {
-                var view = map.getView();
-                view.setCenter(res.center);
-                view.setZoom(res.zoom);
-                view.setRotation(res.rotation);
-                var state = {
-                    zoom: view.getZoom(),
-                    center: view.getCenter(),
-                    rotation: view.getRotation(),
-                };
-                window.history.replaceState(state, 'map', window.location.hash);
-            }
-        }
-    };
-    var updatePermalink = function () {
-        var _a;
-        if (!shouldUpdate) {
-            shouldUpdate = true;
-            return;
-        }
-        var view = map.getView();
-        var center = view.getCenter();
-        var hash = '' +
-            view.getZoom().toFixed(2) +
-            '/' +
-            center[0].toFixed(2) +
-            '/' +
-            center[1].toFixed(2) +
-            '/' +
-            view.getRotation();
-        var state = {
-            zoom: view.getZoom(),
-            center: view.getCenter(),
-            rotation: view.getRotation(),
-        };
-        setCookie((_a = bsrMap + id) !== null && _a !== void 0 ? _a : '', hash);
-        window.history.pushState(state, 'map', getHashCore(hash));
-    };
-    map.on('moveend', updatePermalink);
-    function pp23(event) {
-        if (event.state === null) {
-            return;
-        }
-        map.getView().setCenter(event.state.center);
-        map.getView().setZoom(event.state.zoom);
-        map.getView().setRotation(event.state.rotation);
-        shouldUpdate = false;
-    }
-    window.addEventListener('popstate', pp23);
-    map.on('moveend', updatePermalink);
-    window.addEventListener("hashchange", popState);
-    return function () {
-        window.removeEventListener('popstate', pp23);
-        window.removeEventListener("hashchange", popState);
-    };
-}
-
 var MapEvent = /** @class */ (function () {
     function MapEvent() {
         this.eventFinishEditFeature = new Map();
     }
     return MapEvent;
+}());
+
+var bsrMap = 'bsr-12';
+var shouldUpdate = true;
+var SyncUrl2 = /** @class */ (function () {
+    function SyncUrl2(map, option, id) {
+        var _this = this;
+        this.popState = function () {
+            shouldUpdate = false;
+            var myUrl = new URLSearchParams(window.location.hash.substring(1));
+            var hashMap = myUrl.get("map");
+            if (hashMap) {
+                var res = parse(hashMap);
+                if (res) {
+                    var view = _this.map.getView();
+                    view.setCenter(res.center);
+                    view.setZoom(res.zoom);
+                    view.setRotation(res.rotation);
+                    var state = {
+                        zoom: view.getZoom(),
+                        center: view.getCenter(),
+                        rotation: view.getRotation(),
+                    };
+                    window.history.replaceState(state, 'map', window.location.hash);
+                }
+            }
+        };
+        this.getHashCore = function (hashMap) {
+            var hashNew = new URLSearchParams(window.location.hash.substring(1));
+            var str = '/#';
+            var iaAppendMap = false;
+            hashNew.forEach(function (value, name) {
+                if (name !== 'map') {
+                    if (str === '/#') {
+                        str = str + name + '=' + value;
+                    }
+                    else {
+                        str = str + "&" + name + '=' + value;
+                    }
+                }
+                else {
+                    iaAppendMap = true;
+                    if (str === '/#') {
+                        str = str + 'map=' + hashMap;
+                    }
+                    else {
+                        str = str + '&map=' + hashMap;
+                    }
+                }
+            });
+            if (!iaAppendMap) {
+                if (str === '/#') {
+                    str = str + "map=" + hashMap;
+                }
+                else {
+                    str = str + '&map=' + hashMap;
+                }
+            }
+            return str;
+        };
+        this.updatePermalink = function () {
+            var _a;
+            if (!shouldUpdate) {
+                shouldUpdate = true;
+                return;
+            }
+            var view = _this.map.getView();
+            var center = view.getCenter();
+            var hash = '' +
+                view.getZoom().toFixed(2) +
+                '/' +
+                center[0].toFixed(2) +
+                '/' +
+                center[1].toFixed(2) +
+                '/' +
+                view.getRotation();
+            var state = {
+                zoom: view.getZoom(),
+                center: view.getCenter(),
+                rotation: view.getRotation(),
+            };
+            setCookie((_a = bsrMap + _this.id) !== null && _a !== void 0 ? _a : '', hash);
+            window.history.pushState(state, 'map', _this.getHashCore(hash));
+        };
+        this.pp23 = function (event) {
+            if (event.state === null) {
+                return;
+            }
+            _this.map.getView().setCenter(event.state.center);
+            _this.map.getView().setZoom(event.state.zoom);
+            _this.map.getView().setRotation(event.state.rotation);
+            shouldUpdate = false;
+        };
+        this.Dispose = function () {
+            window.removeEventListener('popstate', _this.pp23);
+            //window.removeEventListener("hashchange", this.popState);
+        };
+        this.map = map;
+        this.option = option;
+        this.id = id;
+        this.map.on('moveend', this.updatePermalink);
+        window.addEventListener('popstate', this.pp23.bind(this));
+        window.addEventListener("hashchange", this.popState.bind(this));
+    }
+    return SyncUrl2;
 }());
 
 var BsrMap = /** @class */ (function (_super) {
@@ -543,7 +546,8 @@ var BsrMap = /** @class */ (function (_super) {
             });
             //this.map.addControl(new ZoomSlider());
             if (_this.option.useSynchronizationUrl) {
-                _this.syncUnmount = SyncUrl(_this.map, _this.option, _this.props.id);
+                // this.syncUnmount = SyncUrl(this.map, this.option,this.props.id)
+                _this.syncUnmount = new SyncUrl2(_this.map, _this.option, _this.props.id).Dispose;
             }
             if (_this.option.removeDoubleClickZoom) {
                 // убрали из дефолта двойной клик
@@ -591,8 +595,8 @@ var BsrMap = /** @class */ (function (_super) {
                 _this.map.addInteraction(dragBox_1);
             }
         });
-        if (this.props.featureCollectionAsJson) {
-            this.DrawFeatureCollection(this.props.featureCollectionAsJson);
+        if (this.props.featuresAsJson) {
+            this._addFeatureFromJson(this.props.featuresAsJson);
         }
         if (this.props.features) {
             this.source.addFeatures(this.props.features);
@@ -618,7 +622,7 @@ var BsrMap = /** @class */ (function (_super) {
         var _a;
         (_a = this.map) === null || _a === void 0 ? void 0 : _a.getView().setRotation(rotation);
     };
-    BsrMap.prototype.DrawFeatureCollection = function (json, callback) {
+    BsrMap.prototype._addFeatureFromJson = function (json, callback) {
         var format = new GeoJSON();
         var features = format.readFeatures(json);
         this.source.addFeatures(features);
@@ -723,6 +727,14 @@ var BsrMap = /** @class */ (function (_super) {
     };
     BsrMap.prototype.AddFeatures = function (f) {
         this.source.addFeatures(f);
+    };
+    BsrMap.prototype.AddFeature = function (data) {
+        if (typeof data === "string") {
+            this._addFeatureFromJson(data);
+        }
+        else {
+            this.AddFeatures([data]);
+        }
     };
     BsrMap.prototype.DeleteFeature = function (f) {
         this.source.removeFeature(f);

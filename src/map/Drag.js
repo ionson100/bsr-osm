@@ -1,6 +1,9 @@
 import {Pointer as PointerInteraction} from 'ol/interaction.js';
 
 
+
+
+
 function handleDownEvent(evt) {
     const run=evt.activePointers[0]?.shiftKey=== true&&evt.activePointers[0]?.ctrlKey===true
     if (!run) {
