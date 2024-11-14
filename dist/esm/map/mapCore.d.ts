@@ -71,6 +71,7 @@ export declare class BsrMap extends React.Component<PropsBsrMap, any> {
     GetCenterFeature(feature: Feature): Array<number>;
     GetCoordinateFeature(feature: Feature): any[] | null;
     GetFlatCoordinateFeature(feature: Feature): number[];
+    GetOptions(): OptionOSM;
     /**
      * remove last point when creating a feature
      */
@@ -84,7 +85,6 @@ export declare class BsrMap extends React.Component<PropsBsrMap, any> {
         isCancel: boolean;
         feature?: Feature<Geometry> | undefined;
         geometry: string;
-        json?: string | undefined;
     }>;
     /**
      * start edit feature
@@ -112,5 +112,6 @@ export declare class BsrMap extends React.Component<PropsBsrMap, any> {
      */
     RefreshStyleFeature(feature: Feature): void;
     componentWillUnmount(): void;
+    componentDidMount(): void;
     render(): React.JSX.Element;
 }

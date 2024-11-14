@@ -1,7 +1,4 @@
 import {Pointer as PointerInteraction} from 'ol/interaction.js';
-import {GeoJSON} from "ol/format";
-
-
 
 
 function handleDownEvent(evt) {
@@ -40,10 +37,8 @@ function handleDragEvent(evt) {
 
 function handleUpEvent() {
     if (this.drag_) {
-        const geoJsonGeom = new GeoJSON();
-        const json = geoJsonGeom.writeGeometry(this.feature_.getGeometry());
         if (this.option.onDragEnd) {
-            this.option.onDragEnd(this.bsrMap, this.feature_, json)
+            this.option.onDragEnd(this.bsrMap, this.feature_)
         }
     }
     this.drag_ = null;

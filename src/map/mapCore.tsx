@@ -104,6 +104,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                 this.syncUnmount()
                 this.syncUnmount=()=>{}
             }
+            this.mapEbent.eventFinishEditFeature.clear()
             if(callback) callback()
         }
     }
@@ -382,6 +383,9 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
             return [];
         }
     }
+    public GetOptions(){
+        return this.option
+    }
 
 
 
@@ -400,7 +404,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
     public CreateFeature(geometry: 'Polygon' | 'LineString' | 'Point' | 'Circle') {
         this.CancelCreate();
         this.isCreate=true;
-        return new Promise<{ bsrMap: BsrMap,isCancel:boolean, feature?: Feature, geometry: string, json?: string }>((resolve, reject) => {
+        return new Promise<{ bsrMap: BsrMap,isCancel:boolean, feature?: Feature, geometry: string}>((resolve, reject) => {
             try {
                 this.map!.removeInteraction(this.selectAltClick);
                 this.map!.removeInteraction(this.modify1!);
@@ -416,7 +420,6 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                         isCancel:true,
                         feature: undefined,
                         geometry: geometry,
-                        json: undefined
                     })
                 }
                 this.draw.on('drawend', (e) => {
@@ -424,19 +427,22 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                     const feature: Feature = e.feature;
                     this.map!.removeInteraction(this.draw!);
                     this.isCreate=false;
+                    if(this.option.onDrawEnd){
+                        this.option.onDrawEnd(this,feature)
+                    }
                     // this.editOnlyRouteOrPolygon()
                     resolve({
                         bsrMap: this,
                         isCancel:false,
                         feature: feature,
                         geometry: geometry,
-                        json: this.FeatureToJson(feature)
                     })
 
                 });
 
                 this.map!.addInteraction(this.draw!);
             }catch (e){
+                this.isCreate=false;
                 reject(e)
             }
 
@@ -512,7 +518,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         if (this.option.onModifyEnd) {
             this.modify1.on('modifyend', (event) => {
                 event.features.forEach((feature) => {
-                    this.option.onModifyEnd!(this, feature, this.FeatureToJson(feature))
+                    this.option.onModifyEnd!(this, feature)
                 });
             });
         }
@@ -532,6 +538,9 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         if(this.syncUnmount){
             this.syncUnmount()
         }
+    }
+    componentDidMount() {
+        this.mapEbent.eventFinishEditFeature.clear()
     }
 
     render() {

@@ -114,7 +114,6 @@ export function SyncUrl(map: Map, option: OptionOSM, id?: string) {
     return () => {
         window.removeEventListener('popstate',pp23 );
         window.removeEventListener("hashchange", popState);
-        console.log("removeEventListener")
     }
 
 

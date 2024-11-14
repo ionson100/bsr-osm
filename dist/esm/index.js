@@ -140,10 +140,8 @@ function handleDragEvent(evt) {
 
 function handleUpEvent() {
     if (this.drag_) {
-        const geoJsonGeom = new GeoJSON();
-        const json = geoJsonGeom.writeGeometry(this.feature_.getGeometry());
         if (this.option.onDragEnd) {
-            this.option.onDragEnd(this.bsrMap, this.feature_, json);
+            this.option.onDragEnd(this.bsrMap, this.feature_);
         }
     }
     this.drag_ = null;
@@ -453,7 +451,6 @@ function SyncUrl(map, option, id) {
     return function () {
         window.removeEventListener('popstate', pp23);
         window.removeEventListener("hashchange", popState);
-        console.log("removeEventListener");
     };
 }
 
@@ -521,6 +518,7 @@ var BsrMap = /** @class */ (function (_super) {
                 this.syncUnmount();
                 this.syncUnmount = function () { };
             }
+            this.mapEbent.eventFinishEditFeature.clear();
             if (callback)
                 callback();
         }
@@ -759,6 +757,9 @@ var BsrMap = /** @class */ (function (_super) {
             return [];
         }
     };
+    BsrMap.prototype.GetOptions = function () {
+        return this.option;
+    };
     /**
      * remove last point when creating a feature
      */
@@ -790,7 +791,6 @@ var BsrMap = /** @class */ (function (_super) {
                         isCancel: true,
                         feature: undefined,
                         geometry: geometry,
-                        json: undefined
                     });
                 };
                 _this.draw.on('drawend', function (e) {
@@ -798,18 +798,21 @@ var BsrMap = /** @class */ (function (_super) {
                     var feature = e.feature;
                     _this.map.removeInteraction(_this.draw);
                     _this.isCreate = false;
+                    if (_this.option.onDrawEnd) {
+                        _this.option.onDrawEnd(_this, feature);
+                    }
                     // this.editOnlyRouteOrPolygon()
                     resolve({
                         bsrMap: _this,
                         isCancel: false,
                         feature: feature,
                         geometry: geometry,
-                        json: _this.FeatureToJson(feature)
                     });
                 });
                 _this.map.addInteraction(_this.draw);
             }
             catch (e) {
+                _this.isCreate = false;
                 reject(e);
             }
         });
@@ -888,7 +891,7 @@ var BsrMap = /** @class */ (function (_super) {
         if (this.option.onModifyEnd) {
             this.modify1.on('modifyend', function (event) {
                 event.features.forEach(function (feature) {
-                    _this.option.onModifyEnd(_this, feature, _this.FeatureToJson(feature));
+                    _this.option.onModifyEnd(_this, feature);
                 });
             });
         }
@@ -905,6 +908,9 @@ var BsrMap = /** @class */ (function (_super) {
         if (this.syncUnmount) {
             this.syncUnmount();
         }
+    };
+    BsrMap.prototype.componentDidMount = function () {
+        this.mapEbent.eventFinishEditFeature.clear();
     };
     BsrMap.prototype.render = function () {
         var _a, _b;

@@ -15,9 +15,9 @@ type OptionOSM = {
     removeDoubleClickZoom?: boolean;
     onClick?: (map: BsrMap, feature: Feature | undefined, evt: MapBrowserEvent<any>) => void;
     onShowContextMenu?: (map: BsrMap, feature: Feature<Geometry> | undefined, e: MouseEvent) => void;
-    onModifyEnd?: (map: BsrMap, feature: Feature<Geometry>, json: string) => void;
-    onDrawEnd?: (map: BsrMap, feature: Feature, json: string) => void;
-    onDragEnd?: (map: BsrMap, feature: Feature, json: string) => void;
+    onModifyEnd?: (map: BsrMap, feature: Feature<Geometry>) => void;
+    onDrawEnd?: (map: BsrMap, feature: Feature) => void;
+    onDragEnd?: (map: BsrMap, feature: Feature) => void;
     onDrawBoxEnd?: (map: BsrMap, features: Feature<Geometry>[], extend: Array<number>) => void;
     useDrawBox?: boolean;
     style?: StyleSettings;
@@ -106,6 +106,7 @@ declare class BsrMap extends React.Component<PropsBsrMap, any> {
     GetCenterFeature(feature: Feature): Array<number>;
     GetCoordinateFeature(feature: Feature): any[] | null;
     GetFlatCoordinateFeature(feature: Feature): number[];
+    GetOptions(): OptionOSM;
     /**
      * remove last point when creating a feature
      */
@@ -119,7 +120,6 @@ declare class BsrMap extends React.Component<PropsBsrMap, any> {
         isCancel: boolean;
         feature?: Feature<Geometry> | undefined;
         geometry: string;
-        json?: string | undefined;
     }>;
     /**
      * start edit feature
@@ -147,6 +147,7 @@ declare class BsrMap extends React.Component<PropsBsrMap, any> {
      */
     RefreshStyleFeature(feature: Feature): void;
     componentWillUnmount(): void;
+    componentDidMount(): void;
     render(): React.JSX.Element;
 }
 
