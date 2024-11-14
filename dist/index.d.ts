@@ -49,9 +49,13 @@ type PropsBsrMap = {
     style?: React.CSSProperties | undefined;
 };
 declare class BsrMap extends React.Component<PropsBsrMap, any> {
+    private mapEbent;
+    private editFeature;
+    private isEdit;
+    private isCreate;
     private isDispose;
     private refDivMap;
-    private rejectPromise?;
+    private resolvePromise?;
     private option;
     private id;
     private styleOsm;
@@ -112,9 +116,10 @@ declare class BsrMap extends React.Component<PropsBsrMap, any> {
      */
     CreateFeature(geometry: 'Polygon' | 'LineString' | 'Point' | 'Circle'): Promise<{
         bsrMap: BsrMap;
-        feature: Feature;
+        isCancel: boolean;
+        feature?: Feature<Geometry> | undefined;
         geometry: string;
-        json: string;
+        json?: string | undefined;
     }>;
     /**
      * start edit feature
@@ -122,6 +127,10 @@ declare class BsrMap extends React.Component<PropsBsrMap, any> {
      * @param callback callback function
      */
     StartEditFeature(feature: Feature<Geometry>, callback?: () => void): void;
+    get IsEdit(): boolean;
+    get IsCreate(): boolean;
+    AddEventFinishEditFeature(fun: (f?: Feature<Geometry>) => void): string;
+    RemoveEventFinishEditFeature(key: string): void;
     /**
      * end of editing feature
      */

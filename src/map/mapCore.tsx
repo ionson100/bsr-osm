@@ -20,6 +20,7 @@ import {StyleOsm} from "./styleOsm";
 import {GetPosition} from "./startPositions";
 import * as extent from "ol/extent";
 import {SyncUrl} from "./sync";
+import {MapEvent} from "./mapEvent";
 
 
 
@@ -36,9 +37,15 @@ export type PropsBsrMap = {
 
 export class BsrMap extends React.Component<PropsBsrMap, any> {
 
+    private mapEbent=new MapEvent()
+    // @ts-ignore
+
+    private editFeature:Feature<Geometry>|undefined
+    private isEdit=false;
+    private isCreate=false;
     private isDispose=false;
     private refDivMap=React.createRef<HTMLDivElement>()
-    private rejectPromise?: (msg: string) => void
+    private resolvePromise?: (msg: string) => void
     private option = this.props.option ?? {}
     private id = uuid()
     private styleOsm: StyleOsm = new StyleOsm(this.option)
@@ -213,8 +220,9 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
 
     public CancelCreate(callback?: () => void) {
         this.map!.removeInteraction(this.draw!);
-        if (this.rejectPromise) {
-            this.rejectPromise('cancel create user')
+        if (this.resolvePromise) {
+            this.resolvePromise('cancel create user')
+            this.isCreate=false;
         }
         if (callback) callback()
 
@@ -345,8 +353,8 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
     public DeleteAllFeatures(callback?: () => void) {
         this.source.clear()
         this.map!.removeInteraction(this.draw!);
-        if (this.rejectPromise) {
-            this.rejectPromise('cancel create user')
+        if (this.resolvePromise) {
+            this.resolvePromise('cancel create user')
         }
         if (callback) callback()
 
@@ -391,33 +399,47 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
      */
     public CreateFeature(geometry: 'Polygon' | 'LineString' | 'Point' | 'Circle') {
         this.CancelCreate();
-        return new Promise<{ bsrMap: BsrMap, feature: Feature, geometry: string, json: string }>((resolve, reject) => {
-            this.map!.removeInteraction(this.selectAltClick);
-            this.map!.removeInteraction(this.modify1!);
-            this.draw = new Draw({
-                source: this.source,
-                //@ts-ignored
-                type: geometry
-            });
-            this.rejectPromise = (msg) => {
-                this.rejectPromise = undefined
-                reject(msg)
+        this.isCreate=true;
+        return new Promise<{ bsrMap: BsrMap,isCancel:boolean, feature?: Feature, geometry: string, json?: string }>((resolve, reject) => {
+            try {
+                this.map!.removeInteraction(this.selectAltClick);
+                this.map!.removeInteraction(this.modify1!);
+                this.draw = new Draw({
+                    source: this.source,
+                    //@ts-ignored
+                    type: geometry
+                });
+                this.resolvePromise = () => {
+                    this.resolvePromise = undefined
+                    resolve({
+                        bsrMap: this,
+                        isCancel:true,
+                        feature: undefined,
+                        geometry: geometry,
+                        json: undefined
+                    })
+                }
+                this.draw.on('drawend', (e) => {
+                    this.resolvePromise = undefined
+                    const feature: Feature = e.feature;
+                    this.map!.removeInteraction(this.draw!);
+                    this.isCreate=false;
+                    // this.editOnlyRouteOrPolygon()
+                    resolve({
+                        bsrMap: this,
+                        isCancel:false,
+                        feature: feature,
+                        geometry: geometry,
+                        json: this.FeatureToJson(feature)
+                    })
+
+                });
+
+                this.map!.addInteraction(this.draw!);
+            }catch (e){
+                reject(e)
             }
-            this.draw.on('drawend', (e) => {
-                this.rejectPromise = undefined
-                const feature: Feature = e.feature;
-                this.map!.removeInteraction(this.draw!);
-               // this.editOnlyRouteOrPolygon()
-                resolve({
-                    bsrMap: this,
-                    feature: feature,
-                    geometry: geometry,
-                    json: this.FeatureToJson(feature)
-                })
 
-            });
-
-            this.map!.addInteraction(this.draw!);
         })
 
 
@@ -429,6 +451,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
      * @param callback callback function
      */
     public StartEditFeature(feature: Feature<Geometry>, callback?: () => void) {
+        this.editFeature=feature;
         const d: Collection<Feature<Geometry>> = this.selectAltClick.getFeatures();
         if (d.getLength() > 0) {
             this.selectAltClick.getFeatures().clear()
@@ -436,17 +459,39 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
             this.selectAltClick.getFeatures().push(feature)
             this.editOnlyRouteOrPolygon()
         }
+        this.isEdit=true;
         if (callback) callback()
+    }
+
+    public get IsEdit(){
+        return  this.isEdit
+    }
+    public get IsCreate(){
+        return this.isCreate
+    }
+    public AddEventFinishEditFeature(fun:(f?:Feature<Geometry>)=>void){
+        const key=uuid()
+        this.mapEbent.eventFinishEditFeature.set(key,fun)
+        return key
+    }
+    public RemoveEventFinishEditFeature(key:string){
+        this.mapEbent.eventFinishEditFeature.delete(key)
     }
 
     /**
      * end of editing feature
      */
     public FinishEditFeature(callback?: () => void) {
+
         this.selectAltClick.getFeatures().clear()
+        this.isEdit=false
+        this.mapEbent.eventFinishEditFeature.forEach((s)=>{
+            s(this.editFeature)
+        })
         if (callback) {
             callback()
         }
+        this.editFeature=undefined
     }
 
     /**

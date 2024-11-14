@@ -9,7 +9,7 @@ var format = require('ol/format');
 var interaction_js = require('ol/interaction.js');
 var condition = require('ol/events/condition');
 var View = require('ol/View.js');
-var Map = require('ol/Map');
+var Map$1 = require('ol/Map');
 var interaction = require('ol/interaction');
 var geom = require('ol/geom');
 var VectorLayer = require('ol/layer/Vector');
@@ -478,12 +478,22 @@ function SyncUrl(map, option, id) {
     };
 }
 
+var MapEvent = /** @class */ (function () {
+    function MapEvent() {
+        this.eventFinishEditFeature = new Map();
+    }
+    return MapEvent;
+}());
+
 var BsrMap = /** @class */ (function (_super) {
     __extends(BsrMap, _super);
     function BsrMap(props) {
         var _this = this;
         var _a;
         _this = _super.call(this, props) || this;
+        _this.mapEbent = new MapEvent();
+        _this.isEdit = false;
+        _this.isCreate = false;
         _this.isDispose = false;
         _this.refDivMap = React.createRef();
         _this.option = (_a = _this.props.option) !== null && _a !== void 0 ? _a : {};
@@ -541,7 +551,7 @@ var BsrMap = /** @class */ (function (_super) {
         setTimeout(function () {
             var _a, _b;
             var coordinate = GetPosition(_this.option, _this.props.id);
-            _this.map = new Map({
+            _this.map = new Map$1({
                 interactions: interaction_js.defaults().extend([new Drag(_this, _this.option),]),
                 layers: [new TileLayer({
                         source: new source_js.OSM(),
@@ -620,8 +630,9 @@ var BsrMap = /** @class */ (function (_super) {
     };
     BsrMap.prototype.CancelCreate = function (callback) {
         this.map.removeInteraction(this.draw);
-        if (this.rejectPromise) {
-            this.rejectPromise('cancel create user');
+        if (this.resolvePromise) {
+            this.resolvePromise('cancel create user');
+            this.isCreate = false;
         }
         if (callback)
             callback();
@@ -742,8 +753,8 @@ var BsrMap = /** @class */ (function (_super) {
     BsrMap.prototype.DeleteAllFeatures = function (callback) {
         this.source.clear();
         this.map.removeInteraction(this.draw);
-        if (this.rejectPromise) {
-            this.rejectPromise('cancel create user');
+        if (this.resolvePromise) {
+            this.resolvePromise('cancel create user');
         }
         if (callback)
             callback();
@@ -783,31 +794,45 @@ var BsrMap = /** @class */ (function (_super) {
     BsrMap.prototype.CreateFeature = function (geometry) {
         var _this = this;
         this.CancelCreate();
+        this.isCreate = true;
         return new Promise(function (resolve, reject) {
-            _this.map.removeInteraction(_this.selectAltClick);
-            _this.map.removeInteraction(_this.modify1);
-            _this.draw = new interaction_js.Draw({
-                source: _this.source,
-                //@ts-ignored
-                type: geometry
-            });
-            _this.rejectPromise = function (msg) {
-                _this.rejectPromise = undefined;
-                reject(msg);
-            };
-            _this.draw.on('drawend', function (e) {
-                _this.rejectPromise = undefined;
-                var feature = e.feature;
-                _this.map.removeInteraction(_this.draw);
-                // this.editOnlyRouteOrPolygon()
-                resolve({
-                    bsrMap: _this,
-                    feature: feature,
-                    geometry: geometry,
-                    json: _this.FeatureToJson(feature)
+            try {
+                _this.map.removeInteraction(_this.selectAltClick);
+                _this.map.removeInteraction(_this.modify1);
+                _this.draw = new interaction_js.Draw({
+                    source: _this.source,
+                    //@ts-ignored
+                    type: geometry
                 });
-            });
-            _this.map.addInteraction(_this.draw);
+                _this.resolvePromise = function () {
+                    _this.resolvePromise = undefined;
+                    resolve({
+                        bsrMap: _this,
+                        isCancel: true,
+                        feature: undefined,
+                        geometry: geometry,
+                        json: undefined
+                    });
+                };
+                _this.draw.on('drawend', function (e) {
+                    _this.resolvePromise = undefined;
+                    var feature = e.feature;
+                    _this.map.removeInteraction(_this.draw);
+                    _this.isCreate = false;
+                    // this.editOnlyRouteOrPolygon()
+                    resolve({
+                        bsrMap: _this,
+                        isCancel: false,
+                        feature: feature,
+                        geometry: geometry,
+                        json: _this.FeatureToJson(feature)
+                    });
+                });
+                _this.map.addInteraction(_this.draw);
+            }
+            catch (e) {
+                reject(e);
+            }
         });
     };
     /**
@@ -816,6 +841,7 @@ var BsrMap = /** @class */ (function (_super) {
      * @param callback callback function
      */
     BsrMap.prototype.StartEditFeature = function (feature, callback) {
+        this.editFeature = feature;
         var d = this.selectAltClick.getFeatures();
         if (d.getLength() > 0) {
             this.selectAltClick.getFeatures().clear();
@@ -824,17 +850,46 @@ var BsrMap = /** @class */ (function (_super) {
             this.selectAltClick.getFeatures().push(feature);
             this.editOnlyRouteOrPolygon();
         }
+        this.isEdit = true;
         if (callback)
             callback();
+    };
+    Object.defineProperty(BsrMap.prototype, "IsEdit", {
+        get: function () {
+            return this.isEdit;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(BsrMap.prototype, "IsCreate", {
+        get: function () {
+            return this.isCreate;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    BsrMap.prototype.AddEventFinishEditFeature = function (fun) {
+        var key = v4();
+        this.mapEbent.eventFinishEditFeature.set(key, fun);
+        return key;
+    };
+    BsrMap.prototype.RemoveEventFinishEditFeature = function (key) {
+        this.mapEbent.eventFinishEditFeature.delete(key);
     };
     /**
      * end of editing feature
      */
     BsrMap.prototype.FinishEditFeature = function (callback) {
+        var _this = this;
         this.selectAltClick.getFeatures().clear();
+        this.isEdit = false;
+        this.mapEbent.eventFinishEditFeature.forEach(function (s) {
+            s(_this.editFeature);
+        });
         if (callback) {
             callback();
         }
+        this.editFeature = undefined;
     };
     /**
      * Assigning default styles
