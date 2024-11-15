@@ -907,19 +907,20 @@ var BsrMap = /** @class */ (function (_super) {
         enumerable: false,
         configurable: true
     });
-    BsrMap.prototype.AddEventFinishEditFeature = function (fun) {
+    BsrMap.prototype.AddEvenStateEditingFeature = function (fun) {
         var key = v4();
         this.mapEventEntEdit.eventMap.set(key, fun);
         return key;
     };
-    BsrMap.prototype.RemoveEventFinishEditFeature = function (key) {
+    BsrMap.prototype.RemoveEvenStateEditingFeature = function (key) {
         this.mapEventEntEdit.eventMap.delete(key);
     };
-    BsrMap.prototype.AddEventStateCreated = function (fun) {
+    BsrMap.prototype.AddEventStateCreatingFeature = function (fun) {
         var key = v4();
         this.mapEventCreated.eventMap.set(key, fun);
+        return key;
     };
-    BsrMap.prototype.RemoveEventStateCreated = function (key) {
+    BsrMap.prototype.RemoveEventStateCreatingFeature = function (key) {
         this.mapEventCreated.eventMap.delete(key);
     };
     /**

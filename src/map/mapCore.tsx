@@ -502,20 +502,21 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
     public get IsCreate(){
         return this.isCreate
     }
-    public AddEventFinishEditFeature(fun:(stateStart:boolean,f?:Feature<Geometry>)=>void){
+    public AddEvenStateEditingFeature(fun:(stateStart:boolean,f?:Feature<Geometry>)=>void){
         const key=uuid()
         this.mapEventEntEdit.eventMap.set(key,fun)
         return key
     }
-    public RemoveEventFinishEditFeature(key:string){
+    public RemoveEvenStateEditingFeature(key:string){
         this.mapEventEntEdit.eventMap.delete(key)
     }
 
-    public AddEventStateCreated(fun:(stateStart:boolean,f?:Feature<Geometry>)=>void){
+    public AddEventStateCreatingFeature(fun:(stateStart:boolean,f?:Feature<Geometry>)=>void){
         const key=uuid()
         this.mapEventCreated.eventMap.set(key,fun)
+        return key
     }
-    public RemoveEventStateCreated(key:string){
+    public RemoveEventStateCreatingFeature(key:string){
         this.mapEventCreated.eventMap.delete(key)
     }
 

@@ -131,10 +131,10 @@ declare class BsrMap extends React.Component<PropsBsrMap, any> {
     StartEditFeature(feature: Feature<Geometry>, callback?: () => void): void;
     get IsEdit(): boolean;
     get IsCreate(): boolean;
-    AddEventFinishEditFeature(fun: (stateStart: boolean, f?: Feature<Geometry>) => void): string;
-    RemoveEventFinishEditFeature(key: string): void;
-    AddEventStateCreated(fun: (stateStart: boolean, f?: Feature<Geometry>) => void): void;
-    RemoveEventStateCreated(key: string): void;
+    AddEvenStateEditingFeature(fun: (stateStart: boolean, f?: Feature<Geometry>) => void): string;
+    RemoveEvenStateEditingFeature(key: string): void;
+    AddEventStateCreatingFeature(fun: (stateStart: boolean, f?: Feature<Geometry>) => void): string;
+    RemoveEventStateCreatingFeature(key: string): void;
     /**
      * end of editing feature
      */
