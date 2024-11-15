@@ -827,9 +827,6 @@ var BsrMap = /** @class */ (function (_super) {
                     if (_this.option.onDrawEnd) {
                         _this.option.onDrawEnd(_this, feature);
                     }
-                    _this.mapEventCreated.eventMap.forEach(function (v) {
-                        v(false, feature);
-                    });
                     // this.editOnlyRouteOrPolygon()
                     resolve({
                         bsrMap: _this,
@@ -837,15 +834,22 @@ var BsrMap = /** @class */ (function (_super) {
                         feature: feature,
                         geometry: geometry,
                     });
+                    setTimeout(function () {
+                        _this.mapEventCreated.eventMap.forEach(function (v) {
+                            v(false, feature);
+                        });
+                    });
                 });
                 _this.map.addInteraction(_this.draw);
             }
             catch (e) {
-                _this.mapEventCreated.eventMap.forEach(function (v) {
-                    v(false, undefined);
-                });
                 _this.isCreate = false;
                 reject(e);
+                setTimeout(function () {
+                    _this.mapEventCreated.eventMap.forEach(function (v) {
+                        v(false, undefined);
+                    });
+                });
             }
         });
     };
