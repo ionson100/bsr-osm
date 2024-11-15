@@ -373,11 +373,17 @@ function getCookie(name) {
     return matches ? decodeURIComponent(matches[1]) : undefined;
 }
 
-var MapEvent = /** @class */ (function () {
-    function MapEvent() {
-        this.eventFinishEditFeature = new Map();
+var MapEventEditing = /** @class */ (function () {
+    function MapEventEditing() {
+        this.eventMap = new Map();
     }
-    return MapEvent;
+    return MapEventEditing;
+}());
+var MapEventCreated = /** @class */ (function () {
+    function MapEventCreated() {
+        this.eventMap = new Map();
+    }
+    return MapEventCreated;
 }());
 
 var bsrMap = 'bsr-12';
@@ -491,7 +497,8 @@ var BsrMap = /** @class */ (function (_super) {
         var _this = this;
         var _a;
         _this = _super.call(this, props) || this;
-        _this.mapEbent = new MapEvent();
+        _this.mapEventEntEdit = new MapEventEditing();
+        _this.mapEventCreated = new MapEventCreated();
         _this.isEdit = false;
         _this.isCreate = false;
         _this.isDispose = false;
@@ -542,7 +549,8 @@ var BsrMap = /** @class */ (function (_super) {
                 this.syncUnmount();
                 this.syncUnmount = function () { };
             }
-            this.mapEbent.eventFinishEditFeature.clear();
+            this.mapEventEntEdit.eventMap.clear();
+            this.mapEventCreated.eventMap.clear();
             if (callback)
                 callback();
         }
@@ -810,6 +818,9 @@ var BsrMap = /** @class */ (function (_super) {
         this.isCreate = true;
         return new Promise(function (resolve, reject) {
             try {
+                _this.mapEventCreated.eventMap.forEach(function (v) {
+                    v(true, undefined);
+                });
                 _this.map.removeInteraction(_this.selectAltClick);
                 _this.map.removeInteraction(_this.modify1);
                 _this.draw = new interaction_js.Draw({
@@ -818,6 +829,9 @@ var BsrMap = /** @class */ (function (_super) {
                     type: geometry
                 });
                 _this.resolvePromise = function () {
+                    _this.mapEventCreated.eventMap.forEach(function (v) {
+                        v(false, undefined);
+                    });
                     _this.resolvePromise = undefined;
                     resolve({
                         bsrMap: _this,
@@ -834,6 +848,9 @@ var BsrMap = /** @class */ (function (_super) {
                     if (_this.option.onDrawEnd) {
                         _this.option.onDrawEnd(_this, feature);
                     }
+                    _this.mapEventCreated.eventMap.forEach(function (v) {
+                        v(true, feature);
+                    });
                     // this.editOnlyRouteOrPolygon()
                     resolve({
                         bsrMap: _this,
@@ -845,6 +862,9 @@ var BsrMap = /** @class */ (function (_super) {
                 _this.map.addInteraction(_this.draw);
             }
             catch (e) {
+                _this.mapEventCreated.eventMap.forEach(function (v) {
+                    v(true, undefined);
+                });
                 _this.isCreate = false;
                 reject(e);
             }
@@ -856,7 +876,11 @@ var BsrMap = /** @class */ (function (_super) {
      * @param callback callback function
      */
     BsrMap.prototype.StartEditFeature = function (feature, callback) {
+        var _this = this;
         this.editFeature = feature;
+        this.mapEventEntEdit.eventMap.forEach(function (s) {
+            s(true, _this.editFeature);
+        });
         var d = this.selectAltClick.getFeatures();
         if (d.getLength() > 0) {
             this.selectAltClick.getFeatures().clear();
@@ -885,21 +909,28 @@ var BsrMap = /** @class */ (function (_super) {
     });
     BsrMap.prototype.AddEventFinishEditFeature = function (fun) {
         var key = v4();
-        this.mapEbent.eventFinishEditFeature.set(key, fun);
+        this.mapEventEntEdit.eventMap.set(key, fun);
         return key;
     };
     BsrMap.prototype.RemoveEventFinishEditFeature = function (key) {
-        this.mapEbent.eventFinishEditFeature.delete(key);
+        this.mapEventEntEdit.eventMap.delete(key);
+    };
+    BsrMap.prototype.AddEventStateCreated = function (fun) {
+        var key = v4();
+        this.mapEventCreated.eventMap.set(key, fun);
+    };
+    BsrMap.prototype.RemoveEventStateCreated = function (key) {
+        this.mapEventCreated.eventMap.delete(key);
     };
     /**
      * end of editing feature
      */
-    BsrMap.prototype.FinishEditFeature = function (callback) {
+    BsrMap.prototype.EndEditFeature = function (callback) {
         var _this = this;
         this.selectAltClick.getFeatures().clear();
         this.isEdit = false;
-        this.mapEbent.eventFinishEditFeature.forEach(function (s) {
-            s(_this.editFeature);
+        this.mapEventEntEdit.eventMap.forEach(function (s) {
+            s(false, _this.editFeature);
         });
         if (callback) {
             callback();
@@ -947,7 +978,8 @@ var BsrMap = /** @class */ (function (_super) {
         }
     };
     BsrMap.prototype.componentDidMount = function () {
-        this.mapEbent.eventFinishEditFeature.clear();
+        this.mapEventEntEdit.eventMap.clear();
+        this.mapEventCreated.eventMap.clear();
     };
     BsrMap.prototype.render = function () {
         var _a, _b;

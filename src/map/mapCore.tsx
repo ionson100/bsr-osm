@@ -20,7 +20,7 @@ import {StyleOsm} from "./styleOsm";
 import {GetPosition} from "./startPositions";
 import * as extent from "ol/extent";
 //import {SyncUrl} from "./sync";
-import {MapEvent} from "./mapEvent";
+import {MapEventCreated, MapEventEditing} from "./mapEventEditing";
 import {SyncUrl2} from "./syncNew";
 
 
@@ -38,8 +38,8 @@ export type PropsBsrMap = {
 
 export class BsrMap extends React.Component<PropsBsrMap, any> {
 
-    private mapEbent=new MapEvent()
-    // @ts-ignore
+    private mapEventEntEdit=new MapEventEditing()
+    private mapEventCreated=new MapEventCreated()
 
     private editFeature:Feature<Geometry>|undefined
     private isEdit=false;
@@ -105,7 +105,8 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                 this.syncUnmount()
                 this.syncUnmount=()=>{}
             }
-            this.mapEbent.eventFinishEditFeature.clear()
+            this.mapEventEntEdit.eventMap.clear()
+            this.mapEventCreated.eventMap.clear()
             if(callback) callback()
         }
     }
@@ -273,6 +274,8 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         this.RefreshStyleFeatures();
         feature.setStyle(this.styleOsm?.selectStyle())
     }
+
+
     public SelectFeatures(features: Feature[]) {
         this.RefreshStyleFeatures();
         features.forEach(f=>{
@@ -417,6 +420,9 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         this.isCreate=true;
         return new Promise<{ bsrMap: BsrMap,isCancel:boolean, feature?: Feature, geometry: string}>((resolve, reject) => {
             try {
+                this.mapEventCreated.eventMap.forEach(v=>{
+                    v(true,undefined)
+                })
                 this.map!.removeInteraction(this.selectAltClick);
                 this.map!.removeInteraction(this.modify1!);
                 this.draw = new Draw({
@@ -425,6 +431,9 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                     type: geometry
                 });
                 this.resolvePromise = () => {
+                    this.mapEventCreated.eventMap.forEach(v=>{
+                        v(false,undefined)
+                    })
                     this.resolvePromise = undefined
                     resolve({
                         bsrMap: this,
@@ -441,6 +450,9 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                     if(this.option.onDrawEnd){
                         this.option.onDrawEnd(this,feature)
                     }
+                    this.mapEventCreated.eventMap.forEach(v=>{
+                        v(true,feature)
+                    })
                     // this.editOnlyRouteOrPolygon()
                     resolve({
                         bsrMap: this,
@@ -448,11 +460,12 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                         feature: feature,
                         geometry: geometry,
                     })
-
                 });
-
                 this.map!.addInteraction(this.draw!);
             }catch (e){
+                this.mapEventCreated.eventMap.forEach(v=>{
+                    v(true,undefined)
+                })
                 this.isCreate=false;
                 reject(e)
             }
@@ -469,6 +482,9 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
      */
     public StartEditFeature(feature: Feature<Geometry>, callback?: () => void) {
         this.editFeature=feature;
+        this.mapEventEntEdit.eventMap.forEach((s)=>{
+            s(true,this.editFeature)
+        })
         const d: Collection<Feature<Geometry>> = this.selectAltClick.getFeatures();
         if (d.getLength() > 0) {
             this.selectAltClick.getFeatures().clear()
@@ -486,24 +502,32 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
     public get IsCreate(){
         return this.isCreate
     }
-    public AddEventFinishEditFeature(fun:(f?:Feature<Geometry>)=>void){
+    public AddEventFinishEditFeature(fun:(stateStart:boolean,f?:Feature<Geometry>)=>void){
         const key=uuid()
-        this.mapEbent.eventFinishEditFeature.set(key,fun)
+        this.mapEventEntEdit.eventMap.set(key,fun)
         return key
     }
     public RemoveEventFinishEditFeature(key:string){
-        this.mapEbent.eventFinishEditFeature.delete(key)
+        this.mapEventEntEdit.eventMap.delete(key)
+    }
+
+    public AddEventStateCreated(fun:(stateStart:boolean,f?:Feature<Geometry>)=>void){
+        const key=uuid()
+        this.mapEventCreated.eventMap.set(key,fun)
+    }
+    public RemoveEventStateCreated(key:string){
+        this.mapEventCreated.eventMap.delete(key)
     }
 
     /**
      * end of editing feature
      */
-    public FinishEditFeature(callback?: () => void) {
+    public EndEditFeature(callback?: () => void) {
 
         this.selectAltClick.getFeatures().clear()
         this.isEdit=false
-        this.mapEbent.eventFinishEditFeature.forEach((s)=>{
-            s(this.editFeature)
+        this.mapEventEntEdit.eventMap.forEach((s)=>{
+            s(false,this.editFeature)
         })
         if (callback) {
             callback()
@@ -555,7 +579,8 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
         }
     }
     componentDidMount() {
-        this.mapEbent.eventFinishEditFeature.clear()
+        this.mapEventEntEdit.eventMap.clear()
+        this.mapEventCreated.eventMap.clear()
     }
 
     render() {

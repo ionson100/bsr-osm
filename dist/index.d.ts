@@ -49,7 +49,8 @@ type PropsBsrMap = {
     style?: React.CSSProperties | undefined;
 };
 declare class BsrMap extends React.Component<PropsBsrMap, any> {
-    private mapEbent;
+    private mapEventEntEdit;
+    private mapEventCreated;
     private editFeature;
     private isEdit;
     private isCreate;
@@ -130,12 +131,14 @@ declare class BsrMap extends React.Component<PropsBsrMap, any> {
     StartEditFeature(feature: Feature<Geometry>, callback?: () => void): void;
     get IsEdit(): boolean;
     get IsCreate(): boolean;
-    AddEventFinishEditFeature(fun: (f?: Feature<Geometry>) => void): string;
+    AddEventFinishEditFeature(fun: (stateStart: boolean, f?: Feature<Geometry>) => void): string;
     RemoveEventFinishEditFeature(key: string): void;
+    AddEventStateCreated(fun: (stateStart: boolean, f?: Feature<Geometry>) => void): void;
+    RemoveEventStateCreated(key: string): void;
     /**
      * end of editing feature
      */
-    FinishEditFeature(callback?: () => void): void;
+    EndEditFeature(callback?: () => void): void;
     /**
      * Assigning default styles
      * @param f target feature
