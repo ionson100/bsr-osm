@@ -451,7 +451,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                         this.option.onDrawEnd(this,feature)
                     }
                     this.mapEventCreated.eventMap.forEach(v=>{
-                        v(true,feature)
+                        v(false,feature)
                     })
                     // this.editOnlyRouteOrPolygon()
                     resolve({
@@ -464,7 +464,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
                 this.map!.addInteraction(this.draw!);
             }catch (e){
                 this.mapEventCreated.eventMap.forEach(v=>{
-                    v(true,undefined)
+                    v(false,undefined)
                 })
                 this.isCreate=false;
                 reject(e)

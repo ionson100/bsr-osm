@@ -849,7 +849,7 @@ var BsrMap = /** @class */ (function (_super) {
                         _this.option.onDrawEnd(_this, feature);
                     }
                     _this.mapEventCreated.eventMap.forEach(function (v) {
-                        v(true, feature);
+                        v(false, feature);
                     });
                     // this.editOnlyRouteOrPolygon()
                     resolve({
@@ -863,7 +863,7 @@ var BsrMap = /** @class */ (function (_super) {
             }
             catch (e) {
                 _this.mapEventCreated.eventMap.forEach(function (v) {
-                    v(true, undefined);
+                    v(false, undefined);
                 });
                 _this.isCreate = false;
                 reject(e);
