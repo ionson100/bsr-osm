@@ -582,8 +582,8 @@ var BsrMap = /** @class */ (function (_super) {
             if (_this.option.onShowContextMenu) {
                 _this.map.getViewport().addEventListener('contextmenu', function (e) {
                     e.preventDefault();
-                    var px = _this.map.getEventPixel({ clientX: e.clientX, clientY: e.clientY });
-                    var feature = _this.map.forEachFeatureAtPixel(px, function (feature) {
+                    var pxl = _this.map.getEventPixel({ clientX: e.clientX, clientY: e.clientY });
+                    var feature = _this.map.forEachFeatureAtPixel(pxl, function (feature) {
                         return feature;
                     });
                     _this.option.onShowContextMenu(_this, feature, e);

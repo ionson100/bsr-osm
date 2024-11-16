@@ -174,8 +174,8 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
             if (this.option.onShowContextMenu) {
                 this.map.getViewport().addEventListener('contextmenu', (e) => {
                     e.preventDefault();
-                    const px=this.map!.getEventPixel({clientX:e.clientX,clientY:e.clientY});
-                    const feature = this.map!.forEachFeatureAtPixel(px,
+                    const pxl=this.map!.getEventPixel({clientX:e.clientX,clientY:e.clientY});
+                    const feature = this.map!.forEachFeatureAtPixel(pxl,
                         function (feature) {
                             return feature;
                         });
