@@ -23,7 +23,7 @@ export class StyleOsm {
             image: new CircleStyle({
                 radius: 7,
                 fill: new Fill({
-                    color: '#f80622'
+                    color: this.hexToRgbAEx(this.option.style?.fillPolygonSelect ?? '#F8F9F4'),
                 })
             })
         })

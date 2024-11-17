@@ -230,7 +230,7 @@ class StyleOsm {
             image: new style.Circle({
                 radius: 7,
                 fill: new style.Fill({
-                    color: '#f80622'
+                    color: this.hexToRgbAEx(this.option.style?.fillPolygonSelect ?? '#F8F9F4'),
                 })
             })
         });
