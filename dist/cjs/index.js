@@ -333,7 +333,7 @@ function parse(hash) {
 function GetPosition(option, id) {
     var _a, _b, _c, _d;
     var zoom = (_a = option.zoom) !== null && _a !== void 0 ? _a : 12;
-    var p = [352236.29, 5200847.21];
+    var p = [348869.291502072, 5197452.410915278];
     if (option.projection === "EPSG:4326") {
         p = [0, 0];
     }
