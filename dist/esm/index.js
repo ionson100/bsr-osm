@@ -207,7 +207,7 @@ class StyleOsm {
                 width: this.option.style?.widthLineSelect ?? 3
             }),
             image: new Circle({
-                radius: this.option.style?.radiusPointSelect??4,
+                radius: this.option.style?.radiusPointSelect??6,
                 fill: new Fill({
                     color: this.option.style?.colorPointSelect ?? '#b91818',
                 })
@@ -251,7 +251,7 @@ class StyleOsm {
                 }),
                 stroke: new Stroke({
                     color: this.option.style?.colorCircle??'#24f22e',
-                    width: this.option.style?.widthCircle??10
+                    width: this.option.style?.widthCircle??5
                 }),
 
             }),
@@ -526,7 +526,8 @@ var BsrMap = /** @class */ (function (_super) {
             this.isDispose = true;
             if (this.syncUnmount) {
                 this.syncUnmount();
-                this.syncUnmount = function () { };
+                this.syncUnmount = function () {
+                };
             }
             this.mapEventEntEdit.eventMap.clear();
             this.mapEventCreated.eventMap.clear();
@@ -968,7 +969,7 @@ var BsrMap = /** @class */ (function (_super) {
     };
     BsrMap.prototype.render = function () {
         var _a, _b;
-        return (React.createElement("div", { ref: this.refDivMap, style: (_a = this.props.style) !== null && _a !== void 0 ? _a : { width: "100%", height: 400 }, id: (_b = this.props.id) !== null && _b !== void 0 ? _b : this.id }));
+        return (React.createElement("div", { ref: this.refDivMap, className: (_a = this.props.className) !== null && _a !== void 0 ? _a : 'bsr-map-default', style: this.props.style, id: (_b = this.props.id) !== null && _b !== void 0 ? _b : this.id }));
     };
     return BsrMap;
 }(React.Component));

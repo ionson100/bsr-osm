@@ -21,7 +21,7 @@ export class StyleOsm {
                 width: this.option.style?.widthLineSelect ?? 3
             }),
             image: new CircleStyle({
-                radius: this.option.style?.radiusPointSelect??4,
+                radius: this.option.style?.radiusPointSelect??6,
                 fill: new Fill({
                     color: this.option.style?.colorPointSelect ?? '#b91818',
                 })
@@ -65,7 +65,7 @@ export class StyleOsm {
                 }),
                 stroke: new Stroke({
                     color: this.option.style?.colorCircle??'#24f22e',
-                    width: this.option.style?.widthCircle??10
+                    width: this.option.style?.widthCircle??5
                 }),
 
             }),
