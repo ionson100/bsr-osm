@@ -215,8 +215,13 @@ class StyleOsm {
     constructor(option) {
         this.option = option;
         this.styles = {};
-        this.refreshStyleSettings();
 
+
+        this.stylesSelect = undefined;
+        this.refreshStyleSettings();
+    }
+
+    refreshStyleSettings(){
         this.stylesSelect = new style.Style({
             fill: new style.Fill({
                 color: this.hexToRgbAEx(this.option.style?.fillPolygonSelect ?? '#F8F9F4'),
@@ -232,8 +237,6 @@ class StyleOsm {
                 })
             })
         });
-    }
-    refreshStyleSettings(){
         this.styles={
 
             'LineString': new style.Style({
