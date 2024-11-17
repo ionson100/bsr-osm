@@ -215,20 +215,17 @@ class StyleOsm {
     constructor(option) {
         this.option = option;
         this.styles = {};
-
-
         this.stylesSelect = undefined;
         this.refreshStyleSettings();
     }
-
     refreshStyleSettings(){
         this.stylesSelect = new style.Style({
             fill: new style.Fill({
                 color: this.hexToRgbAEx(this.option.style?.fillPolygonSelect ?? '#F8F9F4'),
             }),
             stroke: new style.Stroke({
-                color: option.style?.colorPolygonSelect ?? '#f80622',
-                width: option.style?.widthPolygonSelect ?? 3
+                color: this.option.style?.colorPolygonSelect ?? '#f80622',
+                width: this.option.style?.widthPolygonSelect ?? 3
             }),
             image: new style.Circle({
                 radius: 7,
