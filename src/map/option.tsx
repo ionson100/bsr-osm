@@ -112,6 +112,7 @@ export type StyleSettings ={
     widthLineSelect?:number
     fillBodySelect?:string
     colorPointSelect?:string
+    radiusPointSelect?:number
 
     colorCircle?:string
     fillCircle?:string

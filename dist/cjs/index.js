@@ -228,9 +228,9 @@ class StyleOsm {
                 width: this.option.style?.widthLineSelect ?? 3
             }),
             image: new style.Circle({
-                radius: 7,
+                radius: this.option.style?.radiusPointSelect??4,
                 fill: new style.Fill({
-                    color: this.hexToRgbAEx(this.option.style?.colorPointSelect ?? '#b91818'),
+                    color: this.option.style?.colorPointSelect ?? '#b91818',
                 })
             })
         });
