@@ -93,6 +93,7 @@ type StyleSettings = {
     colorLineSelect?: string;
     widthLineSelect?: number;
     fillBodySelect?: string;
+    colorPointSelect?: string;
     colorCircle?: string;
     fillCircle?: string;
     widthCircle?: number;

@@ -221,16 +221,16 @@ class StyleOsm {
     refreshStyleSettings(){
         this.stylesSelect = new style.Style({
             fill: new style.Fill({
-                color: this.hexToRgbAEx(this.option.style?.fillPolygonSelect ?? '#F8F9F4'),
+                color: this.hexToRgbAEx(this.option.style?.fillBodySelect ?? '#F8F9F4'),
             }),
             stroke: new style.Stroke({
-                color: this.option.style?.colorPolygonSelect ?? '#f80622',
-                width: this.option.style?.widthPolygonSelect ?? 3
+                color: this.option.style?.colorLineSelect ?? '#f80622',
+                width: this.option.style?.widthLineSelect ?? 3
             }),
             image: new style.Circle({
                 radius: 7,
                 fill: new style.Fill({
-                    color: this.hexToRgbAEx(this.option.style?.fillPolygonSelect ?? '#F8F9F4'),
+                    color: this.hexToRgbAEx(this.option.style?.colorPointSelect ?? '#b91818'),
                 })
             })
         });

@@ -14,16 +14,16 @@ export class StyleOsm {
     refreshStyleSettings(){
         this.stylesSelect = new Style({
             fill: new Fill({
-                color: this.hexToRgbAEx(this.option.style?.fillPolygonSelect ?? '#F8F9F4'),
+                color: this.hexToRgbAEx(this.option.style?.fillBodySelect ?? '#F8F9F4'),
             }),
             stroke: new Stroke({
-                color: this.option.style?.colorPolygonSelect ?? '#f80622',
-                width: this.option.style?.widthPolygonSelect ?? 3
+                color: this.option.style?.colorLineSelect ?? '#f80622',
+                width: this.option.style?.widthLineSelect ?? 3
             }),
             image: new CircleStyle({
                 radius: 7,
                 fill: new Fill({
-                    color: this.hexToRgbAEx(this.option.style?.fillPolygonSelect ?? '#F8F9F4'),
+                    color: this.hexToRgbAEx(this.option.style?.colorPointSelect ?? '#b91818'),
                 })
             })
         })
