@@ -1,7 +1,7 @@
 {
   "name": "bsr-osm",
-  "version": "1.2.4",
-  "description": "React component wrapper OpenStreetMap ",
+  "version": "1.2.5",
+  "description": "React component wrapper OpenLayers OSM ",
   "author": "ionson100",
   "license": "MIT",
   "keywords": [
