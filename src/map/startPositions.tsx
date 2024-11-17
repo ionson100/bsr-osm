@@ -26,7 +26,7 @@ export type position={
 
 export function GetPosition(option: OptionOSM,id?:string):position {
     let zoom: number =option.zoom??12;
-    let p=[352236.29,5200847.21]
+    let p=[348869.291502072,5197452.410915278]
     if(option.projection==="EPSG:4326"){
         p=[0,0]
     }

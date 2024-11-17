@@ -13,13 +13,11 @@ npm install --save bsr-osm
 ## Usage
 
 ```tsx
-import React from "react";
-import {BsrMap} from "bsr-osm";
+import {BsrMap} from 'bsr-osm'
 import 'bsr-osm/dist/index.css'
 
-
-export default function App (){
-    return (<BsrMap/>);
+export default function App(){
+    return <BsrMap/>
 }
 ```
 
