@@ -535,7 +535,12 @@ var BsrMap = /** @class */ (function (_super) {
         _this.initMap();
         return _this;
     }
+    /**
+     * Disposal of a map object
+     * @param callback callback function
+     */
     BsrMap.prototype.Dispose = function (callback) {
+        var _a, _b;
         if (!this.isDispose) {
             this.map.getAllLayers().forEach(function (layer) {
                 var _a;
@@ -552,6 +557,7 @@ var BsrMap = /** @class */ (function (_super) {
             }
             this.mapEventEntEdit.eventMap.clear();
             this.mapEventCreated.eventMap.clear();
+            (_b = (_a = this.refDivMap.current) === null || _a === void 0 ? void 0 : _a.parentNode) === null || _b === void 0 ? void 0 : _b.removeChild(this.refDivMap.current);
             if (callback)
                 callback();
         }
@@ -633,13 +639,23 @@ var BsrMap = /** @class */ (function (_super) {
             this.source.addFeatures(this.props.features);
         }
     };
+    /**
+     * Getting a div that contains a card
+     */
     BsrMap.prototype.GetDivMap = function () {
         return this.refDivMap.current;
     };
+    /**
+     * Getting the current map projection
+     */
     BsrMap.prototype.GetCurrentEPSGProjection = function () {
         var _a;
         return (_a = this.map) === null || _a === void 0 ? void 0 : _a.getView().getProjection().getCode();
     };
+    /**
+     * Canceling a geometry creation operation
+     * @param callback callback function
+     */
     BsrMap.prototype.CancelCreate = function (callback) {
         this.map.removeInteraction(this.draw);
         if (this.resolvePromise) {
@@ -649,6 +665,10 @@ var BsrMap = /** @class */ (function (_super) {
         if (callback)
             callback();
     };
+    /**
+     * Rotate the map
+     * @param rotation rotation magnitude
+     */
     BsrMap.prototype.Rotation = function (rotation) {
         var _a;
         (_a = this.map) === null || _a === void 0 ? void 0 : _a.getView().setRotation(rotation);
@@ -660,17 +680,26 @@ var BsrMap = /** @class */ (function (_super) {
         if (callback)
             callback();
     };
+    /**
+     * Getting ol.VectorLayer
+     */
     BsrMap.prototype.GetVectorLayer = function () {
         return this.vector;
     };
+    /**
+     * Getting ol.VectorSource
+     */
     BsrMap.prototype.GetVectorSource = function () {
         return this.source;
     };
+    /**
+     * Getting ol.Map
+     */
     BsrMap.prototype.GetMap = function () {
         return this.map;
     };
     /**
-     * Перерисовка стилей
+     * Redrawing Feature Styles
      */
     BsrMap.prototype.RefreshStyleFeatures = function () {
         var _this = this;
@@ -678,14 +707,25 @@ var BsrMap = /** @class */ (function (_super) {
             f.setStyle(_this.styleOsm.styleFunction);
         });
     };
+    /**
+     * Overloading option styles is usually required if you have changed styles programmatically.
+     */
     BsrMap.prototype.RefreshStyleSettings = function () {
         this.styleOsm.refreshStyleSettings();
     };
+    /**
+     * Redrawing feature styles into selected styles
+     * @param feature target Feature
+     */
     BsrMap.prototype.SelectFeature = function (feature) {
         var _a;
         this.RefreshStyleFeatures();
         feature.setStyle((_a = this.styleOsm) === null || _a === void 0 ? void 0 : _a.selectStyle());
     };
+    /**
+     * Redrawing features styles into selected styles
+     * @param features target Features
+     */
     BsrMap.prototype.SelectFeatures = function (features) {
         var _this = this;
         this.RefreshStyleFeatures();
@@ -694,6 +734,12 @@ var BsrMap = /** @class */ (function (_super) {
             f.setStyle((_a = _this.styleOsm) === null || _a === void 0 ? void 0 : _a.selectStyle());
         });
     };
+    /**
+     * Redrawing a card to a new position
+     * @param center center map
+     * @param zoom zoom map
+     * @param rotation rotation map
+     */
     BsrMap.prototype.GoTo = function (center, zoom, rotation) {
         var view = this.map.getView();
         view.setCenter(center);
@@ -704,6 +750,9 @@ var BsrMap = /** @class */ (function (_super) {
             view.setRotation(rotation);
         }
     };
+    /**
+     * Getting the current map display coordinates
+     */
     BsrMap.prototype.GetMapCoordinate = function () {
         var view = this.map.getView();
         return {
@@ -712,6 +761,10 @@ var BsrMap = /** @class */ (function (_super) {
             rotation: view.getRotation()
         };
     };
+    /**
+     * Getting the coordinates of a square, displaying a map in a browser, can be obtained as an object or as a json string
+     * @param isJson request as json
+     */
     BsrMap.prototype.GetBound = function (isJson) {
         var extent = this.map.getView().calculateExtent(this.map.getSize());
         var bound = {};
@@ -725,6 +778,10 @@ var BsrMap = /** @class */ (function (_super) {
         }
         return bound;
     };
+    /**
+     * Getting features from a map, you can select the geometry type, when selecting undefined all features are selected
+     * @param geometry  'Point' | 'LineString' | 'Polygon' | 'Circle' | undefined
+     */
     BsrMap.prototype.GetFeatures = function (geometry) {
         switch (geometry) {
             case undefined: {
@@ -756,9 +813,16 @@ var BsrMap = /** @class */ (function (_super) {
             }
         }
     };
+    /**
+     * Adding Features to a Map
+     */
     BsrMap.prototype.AddFeatures = function (f) {
         this.source.addFeatures(f);
     };
+    /**
+     * Adding Feature to a Map
+     * @param data Feature or GeoJson as string
+     */
     BsrMap.prototype.AddFeature = function (data) {
         if (typeof data === "string") {
             this._addFeatureFromJson(data);
@@ -767,9 +831,17 @@ var BsrMap = /** @class */ (function (_super) {
             this.AddFeatures([data]);
         }
     };
+    /**
+     * Removing Feature from a Map
+     * @param f Feature to be removed
+     */
     BsrMap.prototype.DeleteFeature = function (f) {
         this.source.removeFeature(f);
     };
+    /**
+     * Deleting all features from the map
+     * @param callback callback function
+     */
     BsrMap.prototype.DeleteAllFeatures = function (callback) {
         this.source.clear();
         this.map.removeInteraction(this.draw);
@@ -779,9 +851,15 @@ var BsrMap = /** @class */ (function (_super) {
         if (callback)
             callback();
     };
+    /**
+     * Getting the center of feature
+     */
     BsrMap.prototype.GetCenterFeature = function (feature) {
         return extent__namespace.getCenter(feature.getGeometry().getExtent());
     };
+    /**
+     * Getting Feature Coordinates
+     */
     BsrMap.prototype.GetCoordinateFeature = function (feature) {
         var geometry = feature.getGeometry();
         if (geometry instanceof geom.SimpleGeometry) {
@@ -791,6 +869,9 @@ var BsrMap = /** @class */ (function (_super) {
             return [];
         }
     };
+    /**
+     * Getting  Feature flat Coordinates
+     */
     BsrMap.prototype.GetFlatCoordinateFeature = function (feature) {
         var geometry = feature.getGeometry();
         if (geometry instanceof geom.SimpleGeometry) {
@@ -800,6 +881,9 @@ var BsrMap = /** @class */ (function (_super) {
             return [];
         }
     };
+    /**
+     * Getting options from props
+     */
     BsrMap.prototype.GetOptions = function () {
         return this.option;
     };
@@ -900,6 +984,9 @@ var BsrMap = /** @class */ (function (_super) {
             callback();
     };
     Object.defineProperty(BsrMap.prototype, "IsEdit", {
+        /**
+         * Get the map state, whether the map is in geometry editing state
+         */
         get: function () {
             return this.isEdit;
         },
@@ -907,25 +994,42 @@ var BsrMap = /** @class */ (function (_super) {
         configurable: true
     });
     Object.defineProperty(BsrMap.prototype, "IsCreate", {
+        /**
+         * Get the state of the map, whether the map is in the state of creating geometry
+         */
         get: function () {
             return this.isCreate;
         },
         enumerable: false,
         configurable: true
     });
+    /**
+     * Subscribe to feature edit events, returns a key that can be used to unsubscribe
+     */
     BsrMap.prototype.AddEvenStateEditingFeature = function (fun) {
         var key = v4();
         this.mapEventEntEdit.eventMap.set(key, fun);
         return key;
     };
+    /**
+     * Unsubscribing to Feature Editing Events
+     * @param key event key
+     */
     BsrMap.prototype.RemoveEvenStateEditingFeature = function (key) {
         this.mapEventEntEdit.eventMap.delete(key);
     };
+    /**
+     * Subscribe to feature creation events, returns a key that can be used to unsubscribe
+     */
     BsrMap.prototype.AddEventStateCreatingFeature = function (fun) {
         var key = v4();
         this.mapEventCreated.eventMap.set(key, fun);
         return key;
     };
+    /**
+     * Unsubscribing to geometry creation events
+     * @param key event key
+     */
     BsrMap.prototype.RemoveEventStateCreatingFeature = function (key) {
         this.mapEventCreated.eventMap.delete(key);
     };
@@ -945,15 +1049,16 @@ var BsrMap = /** @class */ (function (_super) {
         this.editFeature = undefined;
     };
     /**
-     * Assigning default styles
-     * @param f target feature
-     * @constructor
+     * Transforming Feature into  geo json
      */
     BsrMap.prototype.FeatureToJson = function (f) {
         var geoJsonGeom = new format.GeoJSON();
         var featureClone = f.clone();
         return geoJsonGeom.writeGeometry(featureClone.getGeometry());
     };
+    /**
+     * Transforming Feature into  geo json collection
+     */
     BsrMap.prototype.FeaturesToJson = function (features) {
         var geoJsonGeom = new format.GeoJSON();
         return geoJsonGeom.writeFeatures(features);

@@ -79,8 +79,6 @@ export type OptionOSM = {
      * map projection. default:'EPSG:4326'
      */
     projection?: 'EPSG:4326'|'EPSG:3857'|string|undefined,
-
-
 }
 
 export type StyleSettings ={
@@ -148,7 +146,6 @@ export type StyleSettings ={
      * Circle border width. default:5
      */
     widthCircle?:number
-
 
     /**
      * Point color. default:'#0324fb'
