@@ -1,6 +1,6 @@
 {
   "name": "bsr-osm",
-  "version": "1.2.10",
+  "version": "1.2.11",
   "description": "React component wrapper OpenLayers OSM ",
   "author": "ionson100",
   "license": "MIT",

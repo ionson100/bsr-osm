@@ -521,6 +521,7 @@ var BsrMap = /** @class */ (function (_super) {
     BsrMap.prototype.Dispose = function (callback) {
         var _a, _b;
         if (!this.isDispose) {
+            this.isDispose = true;
             this.map.getAllLayers().forEach(function (layer) {
                 var _a;
                 (_a = layer.getSource()) === null || _a === void 0 ? void 0 : _a.dispose();
@@ -528,7 +529,6 @@ var BsrMap = /** @class */ (function (_super) {
             });
             this.map.getView().dispose();
             this.map.dispose();
-            this.isDispose = true;
             if (this.syncUnmount) {
                 this.syncUnmount();
                 this.syncUnmount = function () {
@@ -1064,6 +1064,8 @@ var BsrMap = /** @class */ (function (_super) {
         feature.setStyle(this.styleOsm.styleFunction(feature));
     };
     BsrMap.prototype.componentWillUnmount = function () {
+        if (this.isDispose)
+            return;
         if (this.syncUnmount) {
             this.syncUnmount();
         }

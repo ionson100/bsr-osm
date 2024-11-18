@@ -120,13 +120,14 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
      */
     Dispose(callback?: () => void) {
         if (!this.isDispose) {
+            this.isDispose = true;
             this.map!.getAllLayers().forEach((layer) => {
                 layer.getSource()?.dispose();
                 layer.dispose();
             });
             this.map!.getView().dispose();
             this.map!.dispose();
-            this.isDispose = true;
+
             if (this.syncUnmount) {
                 this.syncUnmount()
                 this.syncUnmount = () => {
@@ -717,6 +718,7 @@ export class BsrMap extends React.Component<PropsBsrMap, any> {
 
 
     componentWillUnmount() {
+        if(this.isDispose) return
         if (this.syncUnmount) {
             this.syncUnmount()
         }
