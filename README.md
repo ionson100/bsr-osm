@@ -1,4 +1,4 @@
-# bsr-table-extension
+# bsr-osm
 
 > React component wrapper OpenStreetMap
 
