@@ -1,6 +1,6 @@
 {
   "name": "bsr-osm",
-  "version": "1.2.11",
+  "version": "3.0.0",
   "description": "React component wrapper OpenLayers OSM ",
   "author": "ionson100",
   "license": "MIT",
@@ -23,8 +23,8 @@
   ],
   "peerDependencies": {
     "ol": "^10.2.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "scripts": {
     "build": "rollup -c --bundleConfigAsCjs && @powershell copy  src/map/index.css ./dist"
@@ -58,15 +58,15 @@
     "@testing-library/user-event": "^13.5.0",
     "@types/jest": "^27.5.2",
     "@types/node": "^16.18.97",
-    "@types/react": "^18.3.2",
-    "@types/react-dom": "^18.3.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "@types/uuid": "^10.0.0",
     "eslint": "^7.32.0",
     "eslint-plugin-react": "^7.26.1",
     "postcss": "^8.4.38",
     "postcss-modules": "^6.0.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "react-scripts": "5.0.1",
     "rollup": "^4.17.2",
     "rollup-plugin-css-only": "^4.5.2",
