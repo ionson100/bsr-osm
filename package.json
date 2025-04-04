@@ -1,6 +1,6 @@
 {
   "name": "bsr-osm",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "React component wrapper OpenLayers OSM ",
   "author": "ionson100",
   "license": "MIT",
@@ -22,9 +22,8 @@
     "README.md"
   ],
   "peerDependencies": {
-    "ol": "^10.2.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "ol": "^10.5.0",
+    "react": "*"
   },
   "scripts": {
     "build": "rollup -c --bundleConfigAsCjs && @powershell copy  src/map/index.css ./dist"
@@ -48,14 +47,11 @@
     ]
   },
   "devDependencies": {
-    "ol": "^10.2.1",
+
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.6",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
     "@types/jest": "^27.5.2",
     "@types/node": "^16.18.97",
     "@types/react": "^19.0.0",
@@ -65,8 +61,8 @@
     "eslint-plugin-react": "^7.26.1",
     "postcss": "^8.4.38",
     "postcss-modules": "^6.0.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
     "react-scripts": "5.0.1",
     "rollup": "^4.17.2",
     "rollup-plugin-css-only": "^4.5.2",

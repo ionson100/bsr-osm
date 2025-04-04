@@ -371,4 +371,5 @@ declare class BsrMap extends React.Component<PropsBsrMap, any> {
 
 declare function ProxyMenuDialog(evt: MouseEvent, element: ReactElement): void;
 
-export { BsrMap, type OptionOSM, ProxyMenuDialog, type StyleSettings };
+export { BsrMap, ProxyMenuDialog };
+export type { OptionOSM, StyleSettings };
