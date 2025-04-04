@@ -13,7 +13,7 @@ import { SimpleGeometry } from 'ol/geom';
 import VectorLayer from 'ol/layer/Vector';
 import { Style, Circle, Stroke, Fill } from 'ol/style';
 import * as extent from 'ol/extent';
-import require$$0 from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -56,8 +56,8 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
  * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
  */
 var byteToHex = [];
-for (var i$1 = 0; i$1 < 256; ++i$1) {
-  byteToHex.push((i$1 + 0x100).toString(16).slice(1));
+for (var i = 0; i < 256; ++i) {
+  byteToHex.push((i + 0x100).toString(16).slice(1));
 }
 function unsafeStringify(arr, offset = 0) {
   // Note: Be careful editing this code!  It's been tuned for performance
@@ -1080,24 +1080,6 @@ var BsrMap = /** @class */ (function (_super) {
     };
     return BsrMap;
 }(React.Component));
-
-var createRoot;
-
-var m = require$$0;
-if (process.env.NODE_ENV === 'production') {
-  createRoot = m.createRoot;
-  m.hydrateRoot;
-} else {
-  var i = m.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
-  createRoot = function(c, o) {
-    i.usingClientEntryPoint = true;
-    try {
-      return m.createRoot(c, o);
-    } finally {
-      i.usingClientEntryPoint = false;
-    }
-  };
-}
 
 var ContextMenuMap = /** @class */ (function (_super) {
     __extends(ContextMenuMap, _super);
